@@ -50,7 +50,7 @@ function BarList<T,>({
 }) {
   const maximum = Math.max(1, ...rows.map(getValue));
   if (rows.length === 0) {
-    return <p className="text-sm text-slate-500">{emptyMessage}</p>;
+    return <p className="text-sm text-slate-500 dark:text-slate-400">{emptyMessage}</p>;
   }
 
   return (
@@ -61,10 +61,10 @@ function BarList<T,>({
         return (
           <li key={label}>
             <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
-              <span className="truncate text-slate-700">{label}</span>
-              <span className="font-semibold tabular-nums text-slate-900">{value}</span>
+              <span className="truncate text-slate-700 dark:text-slate-200">{label}</span>
+              <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">{value}</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
                 className="h-full rounded-full bg-blue-600"
                 style={{ width: `${Math.max(value > 0 ? 3 : 0, (value / maximum) * 100)}%` }}
@@ -100,46 +100,46 @@ export function AnalyticsPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-8 text-slate-900 sm:px-8">
+    <main className="min-h-screen bg-slate-100 px-4 py-8 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-8">
       <div className="mx-auto max-w-6xl">
-        <header className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
-          <Link className="text-sm font-medium text-blue-700 hover:text-blue-900" to="/dashboard">
+        <header className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-6 sm:py-5">
+          <Link className="text-sm font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" to="/dashboard">
             ← Dashboard
           </Link>
           <h1 className="mt-2 text-2xl font-bold tracking-tight">Agent analytics</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
             Database-backed service area, status, creation, modification, and lifecycle trends.
           </p>
         </header>
 
         {isLoading && (
-          <p role="status" className="mt-6 rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+          <p role="status" className="mt-6 rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
             Loading analytics…
           </p>
         )}
         {!isLoading && error && (
-          <p role="alert" className="mt-6 rounded-xl border border-red-200 bg-white p-6 text-sm text-red-800">
+          <p role="alert" className="mt-6 rounded-xl border border-red-200 bg-white p-6 text-sm text-red-800 dark:border-red-900 dark:bg-slate-900 dark:text-red-200">
             {error}
           </p>
         )}
 
         {!isLoading && !error && analytics && (
           <>
-            <section className="mt-6 grid gap-4 sm:grid-cols-3">
+            <section className="mt-6 grid gap-3 min-[420px]:grid-cols-2 sm:gap-4 lg:grid-cols-3">
               {[
                 { label: 'Moved to trash', value: analytics.lifecycleTotals.deleted, tone: 'text-amber-700' },
                 { label: 'Restored', value: analytics.lifecycleTotals.restored, tone: 'text-emerald-700' },
                 { label: 'Permanently deleted', value: analytics.lifecycleTotals.permanentlyDeleted, tone: 'text-rose-700' },
               ].map(({ label, value, tone }) => (
-                <article className="rounded-xl border border-slate-200 bg-white p-5" key={label}>
-                  <p className="text-sm font-medium text-slate-500">{label}</p>
-                  <p className={`mt-2 text-3xl font-bold ${tone}`}>{value.toLocaleString()}</p>
+                <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:p-5" key={label}>
+                  <p className="break-words text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
+                  <p className={`mt-2 text-2xl font-bold sm:text-3xl ${tone}`}>{value.toLocaleString()}</p>
                 </article>
               ))}
             </section>
 
             <section className="mt-6 grid gap-4 lg:grid-cols-2">
-              <article className="rounded-xl border border-slate-200 bg-white p-5">
+              <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:p-5">
                 <h2 className="mb-5 font-semibold">Agents by service area</h2>
                 <BarList
                   rows={analytics.agentsByServiceArea}
@@ -148,7 +148,7 @@ export function AnalyticsPage() {
                   emptyMessage="No service area data yet."
                 />
               </article>
-              <article className="rounded-xl border border-slate-200 bg-white p-5">
+              <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:p-5">
                 <h2 className="mb-5 font-semibold">Active vs inactive</h2>
                 <BarList
                   rows={analytics.statusDistribution}
@@ -157,7 +157,7 @@ export function AnalyticsPage() {
                   emptyMessage="No status data yet."
                 />
               </article>
-              <article className="rounded-xl border border-slate-200 bg-white p-5">
+              <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:p-5">
                 <h2 className="mb-5 font-semibold">Agent creation trend · 12 months</h2>
                 <BarList
                   rows={analytics.creationTrend}
@@ -166,7 +166,7 @@ export function AnalyticsPage() {
                   emptyMessage="No creation history yet."
                 />
               </article>
-              <article className="rounded-xl border border-slate-200 bg-white p-5">
+              <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:p-5">
                 <h2 className="mb-5 font-semibold">Modification activity · 12 months</h2>
                 <BarList
                   rows={analytics.modificationActivity}
@@ -177,12 +177,12 @@ export function AnalyticsPage() {
               </article>
             </section>
 
-            <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5">
+            <section className="mt-6 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:p-5">
               <h2 className="mb-5 font-semibold">Deleted, restored, and permanent deletion activity · 12 months</h2>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[560px] border-collapse text-left text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-500">
+                    <tr className="border-b border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-400">
                       <th className="px-3 py-2 font-medium">Month</th>
                       <th className="px-3 py-2 font-medium">Moved to trash</th>
                       <th className="px-3 py-2 font-medium">Restored</th>
@@ -191,8 +191,8 @@ export function AnalyticsPage() {
                   </thead>
                   <tbody>
                     {analytics.lifecycleTrend.map((row) => (
-                      <tr className="border-b border-slate-100 last:border-0" key={row.month}>
-                        <td className="px-3 py-2.5 text-slate-700">{formatMonth(row.month)}</td>
+                      <tr className="border-b border-slate-100 last:border-0 dark:border-slate-800" key={row.month}>
+                        <td className="px-3 py-2.5 text-slate-700 dark:text-slate-200">{formatMonth(row.month)}</td>
                         <td className="px-3 py-2.5 tabular-nums">{row.deleted}</td>
                         <td className="px-3 py-2.5 tabular-nums">{row.restored}</td>
                         <td className="px-3 py-2.5 tabular-nums">{row.permanentlyDeleted}</td>

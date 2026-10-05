@@ -1,7 +1,7 @@
 # Delivery Agent Management System - Progress
 
 ## Current phase
-Phase 15 — Frontend UX (Implementation complete; verification deferred until all implementation phases are finished)
+Phase 18 — Swagger/OpenAPI (Implementation complete; verification deferred until all implementation phases are finished)
 
 ## Completed phases
 - Phase 1: Project Setup
@@ -19,6 +19,9 @@ Phase 15 — Frontend UX (Implementation complete; verification deferred until a
 - Phase 13: CSV Export
 - Phase 14: Frontend
 - Phase 15: Frontend UX
+- Phase 16: Responsive UI
+- Phase 17: Dark Mode
+- Phase 18: Swagger/OpenAPI
 
 ## Current implementation status
 - Separate `client/` and `server/` applications are scaffolded and configured.
@@ -51,11 +54,11 @@ Phase 15 — Frontend UX (Implementation complete; verification deferred until a
 - Dashboard navigation links to the agent list; all client presentation continues to use Tailwind utility classes only.
 - Agent search and service-area filters debounce into shareable URL parameters; active filters can be removed individually or cleared together.
 - Agent listing includes selectable page sizes, visible result ranges, accessible loading announcements, keyboard-dismissable forms, and success feedback for create/update/delete actions.
+- Client pages use compact mobile padding and breakpoint-aware layouts; dashboard navigation and page actions reflow for narrow screens, agent forms remain scrollable on short viewports, and analytics/history tables retain contained horizontal scrolling.
+- Dark mode supports an explicit light/dark toggle across client routes, follows the system preference until overridden, persists the selected mode, and synchronizes explicit preference changes across tabs.
+- OpenAPI 3.0.3 documents health, authentication, agent CRUD/list/export/trash/history/restore, and analytics endpoints; Swagger UI is served at `/api-docs` and the raw spec at `/api-docs/openapi.json`.
 
 ## Pending phases
-- Phase 16: Responsive UI
-- Phase 17: Dark Mode
-- Phase 18: Swagger/OpenAPI
 - Phase 19: README
 - Phase 20: Final Cleanup
 - Phase 21: Testing
@@ -92,6 +95,7 @@ Phase 15 — Frontend UX (Implementation complete; verification deferred until a
 - `GET /api/agents/stats`
 - `GET /api/agents/analytics`
 - `GET /api/agents/export` returns a downloadable CSV and accepts `search`, `status`, and `serviceArea` filters.
+- `GET /api-docs` serves interactive Swagger UI; `GET /api-docs/openapi.json` returns the OpenAPI 3.0.3 document.
 - `GET /api/agents` accepts `page`, `limit`, `search`, `status`, and `serviceArea` query parameters; returns `agents`, `page`, `limit`, `total`, and `totalPages` in `data`.
 
 ## Redis/cache changes

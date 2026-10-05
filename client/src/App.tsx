@@ -7,12 +7,13 @@ import { AgentDetailsPage } from './pages/AgentDetailsPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { LoginPage } from './pages/LoginPage';
 import { TrashPage } from './pages/TrashPage';
+import { ThemeToggle } from './components/ThemeToggle';
 
 function HomeRedirect() {
   const { user, isLoading } = useAuth();
   if (isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600">
+      <main className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
         <p role="status" className="text-sm font-medium">Checking your session…</p>
       </main>
     );
@@ -22,18 +23,21 @@ function HomeRedirect() {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<HomeRedirect />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/agents" element={<AgentsPage />} />
-        <Route path="/agents/:id" element={<AgentDetailsPage />} />
-        <Route path="/agents/trash" element={<TrashPage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<HomeRedirect />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/agents" element={<AgentsPage />} />
+          <Route path="/agents/:id" element={<AgentDetailsPage />} />
+          <Route path="/agents/trash" element={<TrashPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <ThemeToggle />
+    </>
   );
 }
 
