@@ -26,6 +26,8 @@ export interface ListAgentsOptions {
   serviceArea?: string;
 }
 
+export type AgentFilterOptions = Pick<ListAgentsOptions, 'search' | 'status' | 'serviceArea'>;
+
 export interface PaginatedAgents {
   agents: DeliveryAgent[];
   page: number;
@@ -38,6 +40,26 @@ export type DeletedAgent = Pick<
   DeliveryAgent,
   'id' | 'fullName' | 'phone' | 'email' | 'serviceArea' | 'status' | 'deletedAt'
 >;
+
+function buildAgentWhere(options: AgentFilterOptions): Prisma.DeliveryAgentWhereInput {
+  return {
+    deletedAt: null,
+    ...(options.status ? { status: options.status } : {}),
+    ...(options.serviceArea
+      ? { serviceArea: { equals: options.serviceArea, mode: 'insensitive' } }
+      : {}),
+    ...(options.search
+      ? {
+          OR: [
+            { fullName: { contains: options.search, mode: 'insensitive' } },
+            { phone: { contains: options.search, mode: 'insensitive' } },
+            { email: { contains: options.search, mode: 'insensitive' } },
+            { serviceArea: { contains: options.search, mode: 'insensitive' } },
+          ],
+        }
+      : {}),
+  };
+}
 
 function raiseAgentError(error: unknown): never {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -82,23 +104,7 @@ export async function createAgent(input: CreateAgentInput) {
 
 export async function listAgents(options: ListAgentsOptions): Promise<CachedValue<PaginatedAgents>> {
   const key = `agents:list:${hashCacheQuery(options)}`;
-  const where: Prisma.DeliveryAgentWhereInput = {
-    deletedAt: null,
-    ...(options.status ? { status: options.status } : {}),
-    ...(options.serviceArea
-      ? { serviceArea: { equals: options.serviceArea, mode: 'insensitive' } }
-      : {}),
-    ...(options.search
-      ? {
-          OR: [
-            { fullName: { contains: options.search, mode: 'insensitive' } },
-            { phone: { contains: options.search, mode: 'insensitive' } },
-            { email: { contains: options.search, mode: 'insensitive' } },
-            { serviceArea: { contains: options.search, mode: 'insensitive' } },
-          ],
-        }
-      : {}),
-  };
+  const where = buildAgentWhere(options);
 
   return getOrLoad(key, 30, async () => {
     const [agents, total] = await prisma.$transaction([
@@ -118,6 +124,13 @@ export async function listAgents(options: ListAgentsOptions): Promise<CachedValu
       total,
       totalPages: Math.ceil(total / options.limit),
     };
+  });
+}
+
+export async function exportAgents(filters: AgentFilterOptions): Promise<DeliveryAgent[]> {
+  return prisma.deliveryAgent.findMany({
+    where: buildAgentWhere(filters),
+    orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
   });
 }
 
@@ -246,6 +259,9 @@ export async function deleteAgent(id: string): Promise<void> {
       where: { id },
       data: { deletedAt: new Date() },
     });
+    await transaction.agentLifecycleEvent.create({
+      data: { agentId: id, action: 'SOFT_DELETED' },
+    });
   });
   await invalidateAgentCache(id);
 }
@@ -264,10 +280,14 @@ export async function restoreAgent(id: string): Promise<DeliveryAgent> {
       throw new AppError(409, 'AGENT_NOT_DELETED', 'Delivery agent is not in the trash.');
     }
 
-    return transaction.deliveryAgent.update({
+    const restored = await transaction.deliveryAgent.update({
       where: { id },
       data: { deletedAt: null },
     });
+    await transaction.agentLifecycleEvent.create({
+      data: { agentId: id, action: 'RESTORED' },
+    });
+    return restored;
   });
   await invalidateAgentCache(id);
   return restoredAgent;

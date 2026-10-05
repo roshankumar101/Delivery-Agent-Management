@@ -3,6 +3,7 @@ import type { RequestHandler } from 'express';
 import {
   createAgent,
   deleteAgent,
+  exportAgents,
   getAgent,
   getAgentHistory,
   listDeletedAgents,
@@ -90,19 +91,42 @@ export const listAgentsController: RequestHandler = async (_request, response) =
   const query = _request.query;
   const page = parsePositiveIntegerQuery(query.page, 'page', 1);
   const limit = parsePositiveIntegerQuery(query.limit, 'limit', 10, 100);
-  const search = parseTextQuery(query.search, 'search');
-  const serviceArea = parseTextQuery(query.serviceArea, 'serviceArea');
-  const status = parseStatusQuery(query.status);
+  const filters = parseAgentFilters(query);
 
   const cached = await listAgents({
     page,
     limit,
-    ...(search ? { search } : {}),
-    ...(serviceArea ? { serviceArea } : {}),
-    ...(status ? { status } : {}),
+    ...filters,
   });
   response.setHeader('X-Cache', cached.status);
   sendSuccess(response, 'Delivery agents retrieved.', cached.value);
+};
+
+export const exportAgentsController: RequestHandler = async (request, response) => {
+  const filters = parseAgentFilters(request.query);
+  const agents = await exportAgents(filters);
+  const rows: string[][] = [
+    ['Agent ID', 'Full Name', 'Phone', 'Email', 'Service Area', 'Status', 'Created At', 'Updated At'],
+    ...agents.map((agent) => [
+      agent.id,
+      agent.fullName,
+      agent.phone,
+      agent.email,
+      agent.serviceArea,
+      agent.status,
+      agent.createdAt.toISOString(),
+      agent.updatedAt.toISOString(),
+    ]),
+  ];
+  const csv = rows
+    .map((row) => row.map(escapeCsvCell).join(','))
+    .join('\r\n');
+
+  response
+    .status(200)
+    .setHeader('Content-Type', 'text/csv; charset=utf-8')
+    .setHeader('Content-Disposition', 'attachment; filename="delivery-agents.csv"')
+    .send(`\uFEFF${csv}`);
 };
 
 export const listDeletedAgentsController: RequestHandler = async (_request, response) => {
@@ -176,4 +200,21 @@ function parseStatusQuery(value: unknown): AgentStatus | undefined {
   if (value === undefined) return undefined;
   if (value === AgentStatus.ACTIVE || value === AgentStatus.INACTIVE) return value;
   throw new AppError(400, 'VALIDATION_ERROR', 'status must be ACTIVE or INACTIVE.');
+}
+
+function parseAgentFilters(query: Record<string, unknown>) {
+  const search = parseTextQuery(query.search, 'search');
+  const serviceArea = parseTextQuery(query.serviceArea, 'serviceArea');
+  const status = parseStatusQuery(query.status);
+
+  return {
+    ...(search ? { search } : {}),
+    ...(serviceArea ? { serviceArea } : {}),
+    ...(status ? { status } : {}),
+  };
+}
+
+function escapeCsvCell(value: string): string {
+  const safeValue = /^\s*[=+\-@]/.test(value) ? `'${value}` : value;
+  return `"${safeValue.replaceAll('"', '""')}"`;
 }

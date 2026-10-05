@@ -15,6 +15,12 @@ enum AgentStatus {
   INACTIVE
 }
 
+enum AgentLifecycleAction {
+  SOFT_DELETED
+  RESTORED
+  PERMANENTLY_DELETED
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -55,4 +61,15 @@ model AgentModification {
 
   @@unique([agentId, modificationNumber])
   @@index([agentId, modifiedAt])
+}
+
+model AgentLifecycleEvent {
+  id        String              @id @default(cuid())
+  agentId   String
+  action    AgentLifecycleAction
+  occurredAt DateTime            @default(now())
+
+  @@index([occurredAt])
+  @@index([action, occurredAt])
+  @@index([agentId, occurredAt])
 }

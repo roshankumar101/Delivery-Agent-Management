@@ -18,6 +18,13 @@ export async function permanentlyDeleteExpiredAgents(now = new Date()): Promise<
 
     if (expiredAgents.length === 0) return 0;
 
+    await transaction.agentLifecycleEvent.createMany({
+      data: expiredAgents.map(({ id }) => ({
+        agentId: id,
+        action: 'PERMANENTLY_DELETED' as const,
+      })),
+    });
+
     await transaction.deliveryAgent.deleteMany({
       where: {
         id: { in: expiredAgents.map(({ id }) => id) },

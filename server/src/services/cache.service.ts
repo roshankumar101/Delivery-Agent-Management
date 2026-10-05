@@ -70,7 +70,6 @@ async function deleteMatchingKeys(pattern: string): Promise<void> {
 export async function invalidateAgentCache(agentId?: string): Promise<void> {
   const invalidations = [
     deleteMatchingKeys('agents:*'),
-    deleteMatchingKeys('agents:stats'),
   ];
 
   if (agentId) {
