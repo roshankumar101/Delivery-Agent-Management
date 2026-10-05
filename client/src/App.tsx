@@ -3,6 +3,7 @@ import { useAuth } from './auth/AuthContext';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
+import { TrashPage } from './pages/TrashPage';
 
 function HomeRedirect() {
   const { user, isLoading } = useAuth();
@@ -23,6 +24,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/agents/trash" element={<TrashPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

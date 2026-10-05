@@ -1,4 +1,5 @@
 import { useAuth } from '../auth/AuthContext';
+import { Link } from 'react-router-dom';
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
@@ -12,6 +13,12 @@ export function DashboardPage() {
             <h1 className="mt-1 text-2xl font-bold tracking-tight">Dashboard</h1>
           </div>
           <div className="flex items-center gap-4">
+            <Link
+              className="text-sm font-medium text-blue-700 hover:text-blue-900"
+              to="/agents/trash"
+            >
+              Trash
+            </Link>
             <p className="text-sm text-slate-600">{user?.name}</p>
             <button
               className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"

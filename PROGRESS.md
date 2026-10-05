@@ -1,7 +1,7 @@
 # Delivery Agent Management System - Progress
 
 ## Current phase
-Phase 7 — Modification History (Implementation complete; database-backed requests require local PostgreSQL credentials)
+Phase 10 — Redis (Implementation complete; Redis-backed caching enabled when Redis is available)
 
 ## Completed phases
 - Phase 1: Project Setup
@@ -11,6 +11,9 @@ Phase 7 — Modification History (Implementation complete; database-backed reque
 - Phase 5: Agent CRUD
 - Phase 6: Search, Filtering & Pagination
 - Phase 7: Modification History
+- Phase 8: Soft Delete & Restore
+- Phase 9: Automatic 3-Day Permanent Deletion
+- Phase 10: Redis
 
 ## Current implementation status
 - Separate `client/` and `server/` applications are scaffolded and configured.
@@ -27,11 +30,15 @@ Phase 7 — Modification History (Implementation complete; database-backed reque
 - Agent listing supports combined text search, status and service-area filters, and bounded pagination with total metadata.
 - Meaningful agent updates atomically update the agent and append an immutable, sequential modification record; no-op updates create no history entry.
 - A protected history endpoint returns the complete history in modification-number order.
+- Deleting an agent now timestamps `deletedAt`, preserving its history; normal agent lists and detail/update operations exclude trashed agents.
+- Protected trash listing and restore endpoints are available, with an authenticated Tailwind Trash page showing deletion date, remaining three-day retention time, and restore action.
+- A server-started scheduled job runs immediately and every 24 hours, permanently deleting agents whose `deletedAt` is at least three days old; PostgreSQL cascades deletion to related modification history.
+- Cleanup execution prevents overlapping runs, logs failures for next-interval retry, and stops cleanly during SIGINT/SIGTERM shutdown.
+- Redis caches agent list/search results by query hash, individual agent details, and trash results with bounded TTLs; agent stats has an invalidation key reserved for Phase 11.
+- Read responses expose `X-Cache: HIT`, `MISS`, or `BYPASS`; when Redis is unavailable, logged cache errors fall back to PostgreSQL.
+- Agent create/update/soft-delete/restore and scheduled permanent deletion invalidate agent/list/stat cache keys.
 
 ## Pending phases
-- Phase 8: Soft Delete & Restore
-- Phase 9: Automatic 3-Day Permanent Deletion
-- Phase 10: Redis
 - Phase 11: Dashboard Statistics
 - Phase 12: Advanced Analytics
 - Phase 13: CSV Export
@@ -69,19 +76,23 @@ Phase 7 — Modification History (Implementation complete; database-backed reque
 - `PATCH /api/agents/:id`
 - `DELETE /api/agents/:id`
 - `GET /api/agents/:id/history`
+- `GET /api/agents/trash`
+- `POST /api/agents/:id/restore`
 - `GET /api/agents` accepts `page`, `limit`, `search`, `status`, and `serviceArea` query parameters; returns `agents`, `page`, `limit`, `total`, and `totalPages` in `data`.
 
 ## Redis/cache changes
-- None.
+- Added Redis connection management and reusable cache-aside/invalidation helpers. `agents:list:{queryHash}` and `agent:{id}` are cached for reads; trash has a short-lived cache. `agents:stats` is included in invalidation for its next-phase endpoint.
+- Redis startup failures are logged and leave API reads using PostgreSQL; shutdown closes Redis cleanly.
 
 ## Environment variables added
 - `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` are documented in `.env.example` for the explicit development admin creation command.
 
 ## Known issues/blockers
 - The configured local PostgreSQL server rejected the placeholder `postgres` password (`P1000`), so the migration has not been applied and database-backed auth/agent requests cannot yet be exercised. Update `DATABASE_URL` in the ignored root `.env` with valid local credentials.
+- Redis caching requires the configured `REDIS_URL` service to be reachable; unavailable Redis is logged and requests bypass cache.
 - npm reports 7 high-severity dependency advisories in the server dependency tree; no force-fix was applied.
 - The client production build reports a chunk-size warning after adding router and auth dependencies; build succeeds.
-- Tests/build checks were intentionally not run for Phases 5, 6, and 7, per user instruction.
+- Per user instruction, defer all tests and builds until every implementation phase is complete.
 
 ## Important commands
 - From `client/`: `npm run build`
@@ -93,4 +104,4 @@ Phase 7 — Modification History (Implementation complete; database-backed reque
 - From `server/`, after setting `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in the environment: `npm run admin:create:dev`
 
 ## Next recommended step
-- Update local `DATABASE_URL`, apply the initial migration, create a development admin, then continue to Phase 8: Soft Delete & Restore.
+- Update local `DATABASE_URL`, apply the initial migration, create a development admin, then continue to Phase 11: Dashboard Statistics.

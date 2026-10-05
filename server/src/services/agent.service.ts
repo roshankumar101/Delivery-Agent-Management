@@ -1,5 +1,11 @@
 import { AgentStatus, Prisma, type DeliveryAgent } from '@prisma/client';
 import { prisma } from '../config/prisma';
+import {
+  getOrLoad,
+  hashCacheQuery,
+  invalidateAgentCache,
+  type CachedValue,
+} from './cache.service';
 import { AppError } from '../utils/AppError';
 
 export interface CreateAgentInput {
@@ -28,6 +34,11 @@ export interface PaginatedAgents {
   totalPages: number;
 }
 
+export type DeletedAgent = Pick<
+  DeliveryAgent,
+  'id' | 'fullName' | 'phone' | 'email' | 'serviceArea' | 'status' | 'deletedAt'
+>;
+
 function raiseAgentError(error: unknown): never {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === 'P2002') {
@@ -53,7 +64,7 @@ function raiseAgentError(error: unknown): never {
 
 export async function createAgent(input: CreateAgentInput) {
   try {
-    return await prisma.deliveryAgent.create({
+    const agent = await prisma.deliveryAgent.create({
       data: {
         fullName: input.fullName,
         phone: input.phone,
@@ -62,12 +73,15 @@ export async function createAgent(input: CreateAgentInput) {
         ...(input.status ? { status: input.status } : {}),
       },
     });
+    await invalidateAgentCache(agent.id);
+    return agent;
   } catch (error) {
     return raiseAgentError(error);
   }
 }
 
-export async function listAgents(options: ListAgentsOptions): Promise<PaginatedAgents> {
+export async function listAgents(options: ListAgentsOptions): Promise<CachedValue<PaginatedAgents>> {
+  const key = `agents:list:${hashCacheQuery(options)}`;
   const where: Prisma.DeliveryAgentWhereInput = {
     deletedAt: null,
     ...(options.status ? { status: options.status } : {}),
@@ -86,42 +100,68 @@ export async function listAgents(options: ListAgentsOptions): Promise<PaginatedA
       : {}),
   };
 
-  const [agents, total] = await prisma.$transaction([
-    prisma.deliveryAgent.findMany({
-      where,
-      orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
-      skip: (options.page - 1) * options.limit,
-      take: options.limit,
-    }),
-    prisma.deliveryAgent.count({ where }),
-  ]);
+  return getOrLoad(key, 30, async () => {
+    const [agents, total] = await prisma.$transaction([
+      prisma.deliveryAgent.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        skip: (options.page - 1) * options.limit,
+        take: options.limit,
+      }),
+      prisma.deliveryAgent.count({ where }),
+    ]);
 
-  return {
-    agents,
-    page: options.page,
-    limit: options.limit,
-    total,
-    totalPages: Math.ceil(total / options.limit),
-  };
+    return {
+      agents,
+      page: options.page,
+      limit: options.limit,
+      total,
+      totalPages: Math.ceil(total / options.limit),
+    };
+  });
 }
 
 export async function getAgent(id: string) {
-  const agent = await prisma.deliveryAgent.findUnique({ where: { id } });
-  if (!agent) {
-    throw new AppError(404, 'AGENT_NOT_FOUND', 'Delivery agent was not found.');
-  }
-  return agent;
+  const cached = await getOrLoad(`agent:${id}`, 60, async () => {
+    const agent = await prisma.deliveryAgent.findFirst({ where: { id, deletedAt: null } });
+    if (!agent) {
+      throw new AppError(404, 'AGENT_NOT_FOUND', 'Delivery agent was not found.');
+    }
+    return agent;
+  });
+  return cached;
+}
+
+export async function listDeletedAgents(): Promise<CachedValue<DeletedAgent[]>> {
+  return getOrLoad('agents:trash', 30, () =>
+    prisma.deliveryAgent.findMany({
+      where: { deletedAt: { not: null } },
+      select: {
+        id: true,
+        fullName: true,
+        phone: true,
+        email: true,
+        serviceArea: true,
+        status: true,
+        deletedAt: true,
+      },
+      orderBy: { deletedAt: 'desc' },
+    }),
+  );
 }
 
 export async function updateAgent(id: string, input: UpdateAgentInput) {
   try {
-    return await prisma.$transaction(async (transaction) => {
+    const updatedAgent = await prisma.$transaction(async (transaction) => {
       await transaction.$queryRaw<{ id: string }[]>(
-        Prisma.sql`SELECT "id" FROM "DeliveryAgent" WHERE "id" = ${id} FOR UPDATE`,
+        Prisma.sql`SELECT "id" FROM "DeliveryAgent" WHERE "id" = ${id} AND "deletedAt" IS NULL FOR UPDATE`,
       );
 
       const current = await transaction.deliveryAgent.findUnique({ where: { id } });
       if (!current) {
+        throw new AppError(404, 'AGENT_NOT_FOUND', 'Delivery agent was not found.');
+      }
+      if (current.deletedAt) {
         throw new AppError(404, 'AGENT_NOT_FOUND', 'Delivery agent was not found.');
       }
 
@@ -166,6 +206,8 @@ export async function updateAgent(id: string, input: UpdateAgentInput) {
 
       return updatedAgent;
     });
+    await invalidateAgentCache(id);
+    return updatedAgent;
   } catch (error) {
     return raiseAgentError(error);
   }
@@ -187,9 +229,46 @@ export async function getAgentHistory(id: string) {
 }
 
 export async function deleteAgent(id: string): Promise<void> {
-  try {
-    await prisma.deliveryAgent.delete({ where: { id } });
-  } catch (error) {
-    return raiseAgentError(error);
-  }
+  await prisma.$transaction(async (transaction) => {
+    await transaction.$queryRaw<{ id: string }[]>(
+      Prisma.sql`SELECT "id" FROM "DeliveryAgent" WHERE "id" = ${id} FOR UPDATE`,
+    );
+
+    const agent = await transaction.deliveryAgent.findUnique({ where: { id } });
+    if (!agent) {
+      throw new AppError(404, 'AGENT_NOT_FOUND', 'Delivery agent was not found.');
+    }
+    if (agent.deletedAt) {
+      throw new AppError(409, 'AGENT_ALREADY_DELETED', 'Delivery agent is already in the trash.');
+    }
+
+    await transaction.deliveryAgent.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+  });
+  await invalidateAgentCache(id);
+}
+
+export async function restoreAgent(id: string): Promise<DeliveryAgent> {
+  const restoredAgent = await prisma.$transaction(async (transaction) => {
+    await transaction.$queryRaw<{ id: string }[]>(
+      Prisma.sql`SELECT "id" FROM "DeliveryAgent" WHERE "id" = ${id} FOR UPDATE`,
+    );
+
+    const agent = await transaction.deliveryAgent.findUnique({ where: { id } });
+    if (!agent) {
+      throw new AppError(404, 'AGENT_NOT_FOUND', 'Delivery agent was not found.');
+    }
+    if (!agent.deletedAt) {
+      throw new AppError(409, 'AGENT_NOT_DELETED', 'Delivery agent is not in the trash.');
+    }
+
+    return transaction.deliveryAgent.update({
+      where: { id },
+      data: { deletedAt: null },
+    });
+  });
+  await invalidateAgentCache(id);
+  return restoredAgent;
 }

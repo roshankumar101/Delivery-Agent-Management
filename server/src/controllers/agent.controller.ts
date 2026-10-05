@@ -5,7 +5,9 @@ import {
   deleteAgent,
   getAgent,
   getAgentHistory,
+  listDeletedAgents,
   listAgents,
+  restoreAgent,
   updateAgent,
   type CreateAgentInput,
   type UpdateAgentInput,
@@ -92,19 +94,27 @@ export const listAgentsController: RequestHandler = async (_request, response) =
   const serviceArea = parseTextQuery(query.serviceArea, 'serviceArea');
   const status = parseStatusQuery(query.status);
 
-  const result = await listAgents({
+  const cached = await listAgents({
     page,
     limit,
     ...(search ? { search } : {}),
     ...(serviceArea ? { serviceArea } : {}),
     ...(status ? { status } : {}),
   });
-  sendSuccess(response, 'Delivery agents retrieved.', result);
+  response.setHeader('X-Cache', cached.status);
+  sendSuccess(response, 'Delivery agents retrieved.', cached.value);
+};
+
+export const listDeletedAgentsController: RequestHandler = async (_request, response) => {
+  const cached = await listDeletedAgents();
+  response.setHeader('X-Cache', cached.status);
+  sendSuccess(response, 'Deleted delivery agents retrieved.', cached.value);
 };
 
 export const getAgentController: RequestHandler = async (request, response) => {
-  const agent = await getAgent(parseAgentId(request.params.id));
-  sendSuccess(response, 'Delivery agent retrieved.', agent);
+  const cached = await getAgent(parseAgentId(request.params.id));
+  response.setHeader('X-Cache', cached.status);
+  sendSuccess(response, 'Delivery agent retrieved.', cached.value);
 };
 
 export const getAgentHistoryController: RequestHandler = async (request, response) => {
@@ -120,7 +130,12 @@ export const updateAgentController: RequestHandler = async (request, response) =
 
 export const deleteAgentController: RequestHandler = async (request, response) => {
   await deleteAgent(parseAgentId(request.params.id));
-  sendSuccess(response, 'Delivery agent deleted.', { id: request.params.id });
+  sendSuccess(response, 'Delivery agent moved to trash.', { id: request.params.id });
+};
+
+export const restoreAgentController: RequestHandler = async (request, response) => {
+  const agent = await restoreAgent(parseAgentId(request.params.id));
+  sendSuccess(response, 'Delivery agent restored.', agent);
 };
 
 function parseTextQuery(value: unknown, field: string): string | undefined {
