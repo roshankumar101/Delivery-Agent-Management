@@ -1,7 +1,7 @@
 # Delivery Agent Management System - Progress
 
 ## Current phase
-Phase 5 — Agent CRUD (Implementation complete; database-backed requests require local PostgreSQL credentials)
+Phase 7 — Modification History (Implementation complete; database-backed requests require local PostgreSQL credentials)
 
 ## Completed phases
 - Phase 1: Project Setup
@@ -9,6 +9,8 @@ Phase 5 — Agent CRUD (Implementation complete; database-backed requests requir
 - Phase 3: PostgreSQL + Prisma
 - Phase 4: Authentication
 - Phase 5: Agent CRUD
+- Phase 6: Search, Filtering & Pagination
+- Phase 7: Modification History
 
 ## Current implementation status
 - Separate `client/` and `server/` applications are scaffolded and configured.
@@ -22,11 +24,11 @@ Phase 5 — Agent CRUD (Implementation complete; database-backed requests requir
 - The client has auth state, session restoration, login/logout, and protected dashboard routing.
 - A development-only command creates an admin with a bcrypt-hashed password from environment variables.
 - Protected agent endpoints support create, list, detail, update, and delete with request validation and explicit duplicate/missing-agent errors.
-- Both client and server production builds pass.
+- Agent listing supports combined text search, status and service-area filters, and bounded pagination with total metadata.
+- Meaningful agent updates atomically update the agent and append an immutable, sequential modification record; no-op updates create no history entry.
+- A protected history endpoint returns the complete history in modification-number order.
 
 ## Pending phases
-- Phase 6: Search, Filtering & Pagination
-- Phase 7: Modification History
 - Phase 8: Soft Delete & Restore
 - Phase 9: Automatic 3-Day Permanent Deletion
 - Phase 10: Redis
@@ -66,6 +68,8 @@ Phase 5 — Agent CRUD (Implementation complete; database-backed requests requir
 - `GET /api/agents/:id`
 - `PATCH /api/agents/:id`
 - `DELETE /api/agents/:id`
+- `GET /api/agents/:id/history`
+- `GET /api/agents` accepts `page`, `limit`, `search`, `status`, and `serviceArea` query parameters; returns `agents`, `page`, `limit`, `total`, and `totalPages` in `data`.
 
 ## Redis/cache changes
 - None.
@@ -77,7 +81,7 @@ Phase 5 — Agent CRUD (Implementation complete; database-backed requests requir
 - The configured local PostgreSQL server rejected the placeholder `postgres` password (`P1000`), so the migration has not been applied and database-backed auth/agent requests cannot yet be exercised. Update `DATABASE_URL` in the ignored root `.env` with valid local credentials.
 - npm reports 7 high-severity dependency advisories in the server dependency tree; no force-fix was applied.
 - The client production build reports a chunk-size warning after adding router and auth dependencies; build succeeds.
-- Tests/build checks were intentionally not run for Phase 5, per user instruction.
+- Tests/build checks were intentionally not run for Phases 5, 6, and 7, per user instruction.
 
 ## Important commands
 - From `client/`: `npm run build`
@@ -89,4 +93,4 @@ Phase 5 — Agent CRUD (Implementation complete; database-backed requests requir
 - From `server/`, after setting `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in the environment: `npm run admin:create:dev`
 
 ## Next recommended step
-- Update local `DATABASE_URL`, apply the initial migration, create a development admin, then continue to Phase 6: Search, Filtering & Pagination.
+- Update local `DATABASE_URL`, apply the initial migration, create a development admin, then continue to Phase 8: Soft Delete & Restore.

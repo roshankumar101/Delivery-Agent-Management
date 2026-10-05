@@ -4,6 +4,7 @@ import {
   createAgent,
   deleteAgent,
   getAgent,
+  getAgentHistory,
   listAgents,
   updateAgent,
   type CreateAgentInput,
@@ -84,13 +85,31 @@ export const createAgentController: RequestHandler = async (request, response) =
 };
 
 export const listAgentsController: RequestHandler = async (_request, response) => {
-  const agents = await listAgents();
-  sendSuccess(response, 'Delivery agents retrieved.', agents);
+  const query = _request.query;
+  const page = parsePositiveIntegerQuery(query.page, 'page', 1);
+  const limit = parsePositiveIntegerQuery(query.limit, 'limit', 10, 100);
+  const search = parseTextQuery(query.search, 'search');
+  const serviceArea = parseTextQuery(query.serviceArea, 'serviceArea');
+  const status = parseStatusQuery(query.status);
+
+  const result = await listAgents({
+    page,
+    limit,
+    ...(search ? { search } : {}),
+    ...(serviceArea ? { serviceArea } : {}),
+    ...(status ? { status } : {}),
+  });
+  sendSuccess(response, 'Delivery agents retrieved.', result);
 };
 
 export const getAgentController: RequestHandler = async (request, response) => {
   const agent = await getAgent(parseAgentId(request.params.id));
   sendSuccess(response, 'Delivery agent retrieved.', agent);
+};
+
+export const getAgentHistoryController: RequestHandler = async (request, response) => {
+  const history = await getAgentHistory(parseAgentId(request.params.id));
+  sendSuccess(response, 'Agent modification history retrieved.', history);
 };
 
 export const updateAgentController: RequestHandler = async (request, response) => {
@@ -103,3 +122,43 @@ export const deleteAgentController: RequestHandler = async (request, response) =
   await deleteAgent(parseAgentId(request.params.id));
   sendSuccess(response, 'Delivery agent deleted.', { id: request.params.id });
 };
+
+function parseTextQuery(value: unknown, field: string): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string') {
+    throw new AppError(400, 'VALIDATION_ERROR', `${field} must be provided once as a string.`);
+  }
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length > 200) {
+    throw new AppError(400, 'VALIDATION_ERROR', `${field} must be 200 characters or fewer.`);
+  }
+  return trimmed;
+}
+
+function parsePositiveIntegerQuery(
+  value: unknown,
+  field: string,
+  defaultValue: number,
+  maximum = Number.MAX_SAFE_INTEGER,
+): number {
+  if (value === undefined) return defaultValue;
+  if (typeof value !== 'string' || !/^[1-9]\d*$/.test(value)) {
+    throw new AppError(400, 'VALIDATION_ERROR', `${field} must be a positive integer.`);
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed > maximum) {
+    throw new AppError(
+      400,
+      'VALIDATION_ERROR',
+      `${field} must be no greater than ${maximum}.`,
+    );
+  }
+  return parsed;
+}
+
+function parseStatusQuery(value: unknown): AgentStatus | undefined {
+  if (value === undefined) return undefined;
+  if (value === AgentStatus.ACTIVE || value === AgentStatus.INACTIVE) return value;
+  throw new AppError(400, 'VALIDATION_ERROR', 'status must be ACTIVE or INACTIVE.');
+}
