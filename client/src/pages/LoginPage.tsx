@@ -57,7 +57,7 @@ export function LoginPage() {
           Delivery operations
         </p>
         <h1 className="mt-3 text-3xl font-bold tracking-tight">Admin sign in</h1>
-        <p         className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
           Sign in to manage delivery agent operations.
         </p>
 

@@ -7,7 +7,7 @@ if (!redisUrl) {
 }
 
 export const redisClient = createClient({
-  url: redisUrl,
+  ...(redisUrl ? { url: redisUrl } : {}),
   socket: {
     reconnectStrategy(retries) {
       if (retries > 10) {
@@ -23,6 +23,11 @@ redisClient.on('error', (error) => {
 });
 
 export async function connectRedis(): Promise<void> {
+  if (!redisUrl) {
+    console.warn('REDIS_URL is not configured; Redis caching is disabled and requests will use PostgreSQL.');
+    return;
+  }
+
   if (redisClient.isOpen) return;
 
   try {

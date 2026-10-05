@@ -1,7 +1,7 @@
 # Delivery Agent Management System - Progress
 
 ## Current phase
-Phase 18 — Swagger/OpenAPI (Implementation complete; verification deferred until all implementation phases are finished)
+Phase 21 — Manual Testing (Ready; automated validation intentionally deferred)
 
 ## Completed phases
 - Phase 1: Project Setup
@@ -22,11 +22,13 @@ Phase 18 — Swagger/OpenAPI (Implementation complete; verification deferred unt
 - Phase 16: Responsive UI
 - Phase 17: Dark Mode
 - Phase 18: Swagger/OpenAPI
+- Phase 19: README
+- Phase 20: Final Cleanup
 
 ## Current implementation status
 - Separate `client/` and `server/` applications are scaffolded and configured.
 - Root environment files were created for local development and secrets are not committed.
-- The React client uses Tailwind CSS utilities for component styling; its global stylesheet contains only Tailwind directives.
+- The React client uses Tailwind CSS v4 utilities through the Vite integration; its global stylesheet imports Tailwind and declares the class-based dark variant without a PostCSS configuration.
 - The Express server is separated into an importable app and a server bootstrap.
 - Health routing, standardized success/error response helpers, 404 handling, and centralized error handling are in place.
 - Prisma schema contains the admin user, delivery agent, and unlimited modification history models, with enums, uniqueness constraints, indexes, and cascading history cleanup.
@@ -57,11 +59,13 @@ Phase 18 — Swagger/OpenAPI (Implementation complete; verification deferred unt
 - Client pages use compact mobile padding and breakpoint-aware layouts; dashboard navigation and page actions reflow for narrow screens, agent forms remain scrollable on short viewports, and analytics/history tables retain contained horizontal scrolling.
 - Dark mode supports an explicit light/dark toggle across client routes, follows the system preference until overridden, persists the selected mode, and synchronizes explicit preference changes across tabs.
 - OpenAPI 3.0.3 documents health, authentication, agent CRUD/list/export/trash/history/restore, and analytics endpoints; Swagger UI is served at `/api-docs` and the raw spec at `/api-docs/openapi.json`.
+- Added the root README with project overview, architecture, prerequisites, environment setup, database/admin initialization, development startup, API reference, scripts, and operational notes.
+- Aligned client Tailwind dependencies to v4, removed the PostCSS/autoprefixer dependencies and obsolete configuration files, and cleaned unused starter assets and root-level npm manifests.
+- Updated the client document title and description for the application.
+- Removed the obsolete Vite starter README, unused `swagger-jsdoc` dependency, and branded the client favicon; corrected the protected-route dark loading state and minor JSX formatting.
 
 ## Pending phases
-- Phase 19: README
-- Phase 20: Final Cleanup
-- Phase 21: Testing
+- Phase 21: Manual Testing
 
 ## Important architecture decisions
 - Keep frontend and backend in separate folders at the repository root (`client/` and `server/`).
@@ -107,10 +111,10 @@ Phase 18 — Swagger/OpenAPI (Implementation complete; verification deferred unt
 
 ## Known issues/blockers
 - The configured local PostgreSQL server rejected the placeholder `postgres` password (`P1000`), so the migration has not been applied and database-backed auth/agent requests cannot yet be exercised. Update `DATABASE_URL` in the ignored root `.env` with valid local credentials.
-- Redis caching requires the configured `REDIS_URL` service to be reachable; unavailable Redis is logged and requests bypass cache.
+- Redis is optional. If `REDIS_URL` is absent, caching is disabled with a warning and reads use PostgreSQL; connection failures also fall back to PostgreSQL.
 - npm reports 7 high-severity dependency advisories in the server dependency tree; no force-fix was applied.
-- The client production build reports a chunk-size warning after adding router and auth dependencies; build succeeds.
-- Per user instruction, defer all tests and builds until every implementation phase is complete. Prisma client generation for the lifecycle-event schema change is also deferred.
+- A previous client production build reported a chunk-size warning after adding router and auth dependencies; recheck during validation after the Tailwind v4 update.
+- Per user instruction, no project test, lint, build, or runtime commands were run during this review; the code is ready for the user's manual testing. Prisma Client generation for the lifecycle-event schema change remains deferred.
 
 ## Important commands
 - From `client/`: `npm run build`
@@ -124,4 +128,4 @@ Phase 18 — Swagger/OpenAPI (Implementation complete; verification deferred unt
 - Authenticated CSV download: `GET /api/agents/export?search=...&status=ACTIVE&serviceArea=...`
 
 ## Next recommended step
-- Continue to Phase 14: Frontend, then perform testing/build verification only after all implementation phases are complete.
+- Start manual testing and report any issues to address before or alongside automated validation.
