@@ -83,6 +83,12 @@ export function DashboardPage() {
           <div className="flex items-center gap-4">
             <Link
               className="text-sm font-medium text-blue-700 hover:text-blue-900"
+              to="/agents"
+            >
+              Agents
+            </Link>
+            <Link
+              className="text-sm font-medium text-blue-700 hover:text-blue-900"
               to="/agents/trash"
             >
               Trash

@@ -1,7 +1,7 @@
 # Delivery Agent Management System - Progress
 
 ## Current phase
-Phase 13 — CSV Export (Implementation complete; verification deferred until all implementation phases are finished)
+Phase 15 — Frontend UX (Implementation complete; verification deferred until all implementation phases are finished)
 
 ## Completed phases
 - Phase 1: Project Setup
@@ -17,6 +17,8 @@ Phase 13 — CSV Export (Implementation complete; verification deferred until al
 - Phase 11: Dashboard Statistics
 - Phase 12: Advanced Analytics
 - Phase 13: CSV Export
+- Phase 14: Frontend
+- Phase 15: Frontend UX
 
 ## Current implementation status
 - Separate `client/` and `server/` applications are scaffolded and configured.
@@ -44,10 +46,13 @@ Phase 13 — CSV Export (Implementation complete; verification deferred until al
 - Analytics include service area and status distribution, 12-month creation/modification trends, and 12-month lifecycle events plus lifetime lifecycle totals.
 - CSV export downloads all matching non-deleted agents and supports the list search/status/service-area filters.
 - Dashboard cards and the analytics page visualize actual API data; CSV export is accessible from the dashboard.
+- Authenticated agent management pages provide searchable/filterable, URL-backed pagination; create, edit, soft-delete, detail, and full modification-history workflows; and filtered CSV export.
+- The agent list has table and compact-card layouts, loading/error/empty states, and the detail page supports editing and moving an agent to trash.
+- Dashboard navigation links to the agent list; all client presentation continues to use Tailwind utility classes only.
+- Agent search and service-area filters debounce into shareable URL parameters; active filters can be removed individually or cleared together.
+- Agent listing includes selectable page sizes, visible result ranges, accessible loading announcements, keyboard-dismissable forms, and success feedback for create/update/delete actions.
 
 ## Pending phases
-- Phase 14: Frontend
-- Phase 15: Frontend UX
 - Phase 16: Responsive UI
 - Phase 17: Dark Mode
 - Phase 18: Swagger/OpenAPI
@@ -56,7 +61,7 @@ Phase 13 — CSV Export (Implementation complete; verification deferred until al
 - Phase 21: Testing
 
 ## Important architecture decisions
-- Keep frontend and backend in separate folders under `delivery-agent-management/`.
+- Keep frontend and backend in separate folders at the repository root (`client/` and `server/`).
 - Use React + Vite + TypeScript + Tailwind CSS for the client.
 - Use Express + TypeScript + Prisma + PostgreSQL + Redis for the server.
 - Keep business logic separated from controllers as the project expands.
