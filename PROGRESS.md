@@ -36,6 +36,7 @@ Phase 21 — Manual Testing (Ready; automated validation intentionally deferred)
 - Admin login and current-user endpoints use bcrypt password verification, expiring JWTs, and bearer authentication middleware.
 - The client has auth state, session restoration, login/logout, and protected dashboard routing.
 - A development-only command creates an admin with a bcrypt-hashed password from environment variables.
+- Admin credentials are environment-based; the Prisma seed is idempotent, the actual `.env` is ignored, `.env.example` is provided, and Docker automatically applies migrations and seeds the admin before starting the backend.
 - Protected agent endpoints support create, list, detail, update, and delete with request validation and explicit duplicate/missing-agent errors.
 - Agent listing supports combined text search, status and service-area filters, and bounded pagination with total metadata.
 - Meaningful agent updates atomically update the agent and append an immutable, sequential modification record; no-op updates create no history entry.

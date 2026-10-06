@@ -74,8 +74,8 @@ function normalizeAgentInput(body: unknown, partial: boolean): CreateAgentInput 
   return normalized;
 }
 
-function parseAgentId(id: string | undefined): string {
-  if (!id || !id.trim()) {
+function parseAgentId(id: unknown): string {
+  if (typeof id !== 'string' || !id.trim()) {
     throw new AppError(400, 'VALIDATION_ERROR', 'A delivery agent ID is required.');
   }
   return id.trim();
@@ -153,8 +153,9 @@ export const updateAgentController: RequestHandler = async (request, response) =
 };
 
 export const deleteAgentController: RequestHandler = async (request, response) => {
-  await deleteAgent(parseAgentId(request.params.id));
-  sendSuccess(response, 'Delivery agent moved to trash.', { id: request.params.id });
+  const id = parseAgentId(request.params.id);
+  await deleteAgent(id);
+  sendSuccess(response, 'Delivery agent moved to trash.', { id });
 };
 
 export const restoreAgentController: RequestHandler = async (request, response) => {

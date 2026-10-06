@@ -33,6 +33,24 @@ PROGRESS.md             Implementation phase tracker
 - Node.js and npm compatible with the versions required by the client and server dependencies.
 - PostgreSQL, with an empty database created for this application.
 - Redis is recommended for caching. The API logs Redis connection failures and serves requests from PostgreSQL when Redis is unavailable.
+- Docker with the Docker Compose plugin for the containerized setup below.
+
+## Docker setup
+
+From a clone of the repository, copy the example environment file and start the stack:
+
+```sh
+git clone <repository-url>
+cd delivery-agent-management
+cp .env.example .env
+docker compose up --build
+```
+
+Docker Compose reads the root `.env` automatically, so no shell exports are needed. The copied `.env.example` includes example local credentials and can start the stack as-is. To use different admin credentials, edit `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in `.env` before starting Docker. `.env` is local only and must not be committed; `.env.example` is safe to commit and contains no real admin password.
+
+The backend waits for PostgreSQL and Redis to become healthy, generates Prisma Client, applies committed migrations with `prisma migrate deploy`, and runs the Prisma admin seed before starting the API. Prisma Client is also generated at image build time so the backend can be compiled. The seed hashes the password with bcrypt before storing it. It is idempotent: if the configured email already exists, it leaves that account unchanged. Changing only the password for an existing email will not update that account; using a different email creates another admin and does not remove the previous one.
+
+Open the app at `http://localhost:8080` and sign in with the email and password currently configured in `.env`. The API is available at `http://localhost:5000`. The admin password is only passed to the backend and is never included in the frontend build.
 
 ## Local development
 

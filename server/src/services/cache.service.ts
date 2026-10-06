@@ -52,15 +52,17 @@ async function deleteMatchingKeys(pattern: string): Promise<void> {
 
   let batch: string[] = [];
   try {
-    for await (const key of redisClient.scanIterator({ MATCH: pattern, COUNT: 100 })) {
-      batch.push(key);
-      if (batch.length === 100) {
-        await redisClient.unlink(batch);
-        batch = [];
+    for await (const keys of redisClient.scanIterator({ MATCH: pattern, COUNT: 100 })) {
+      for (const key of keys) {
+        batch.push(key);
+        if (batch.length === 100) {
+          await Promise.all(batch.map((cacheKey) => redisClient.unlink(cacheKey)));
+          batch = [];
+        }
       }
     }
     if (batch.length > 0) {
-      await redisClient.unlink(batch);
+      await Promise.all(batch.map((cacheKey) => redisClient.unlink(cacheKey)));
     }
   } catch (error) {
     console.error(`Redis invalidation failed for keys matching "${pattern}".`, error);
