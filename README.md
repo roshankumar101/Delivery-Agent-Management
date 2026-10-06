@@ -158,4 +158,4 @@ Run these from the indicated application directory:
 
 ## Implementation and validation status
 
-See [PROGRESS.md](./PROGRESS.md) for the phase tracker and known setup constraints. Tests and build verification remain pending; they were intentionally not run during the requested static review.
+See [PROGRESS.md](./PROGRESS.md) for the phase tracker and validation details. Frontend/backend builds, Prisma Client generation, Compose configuration and image builds, and targeted authenticated read-only API checks have passed. Full interactive CRUD testing remains pending; no project test suite is currently configured.

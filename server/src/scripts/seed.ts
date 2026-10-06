@@ -22,7 +22,12 @@ async function seedAdmin(): Promise<void> {
     });
 
     if (existingAdmin) {
-      console.info(`Admin seed skipped; an admin already exists for ${email}.`);
+      await prisma.user.update({
+        where: { email },
+        data: { name },
+        select: { id: true },
+      });
+      console.info('Admin seed synchronized the configured admin name.');
       return;
     }
 
@@ -35,7 +40,7 @@ async function seedAdmin(): Promise<void> {
       },
       select: { id: true },
     });
-    console.info(`Admin seed created an admin for ${email}.`);
+    console.info('Admin seed created the configured admin.');
   } finally {
     await prisma.$disconnect();
   }

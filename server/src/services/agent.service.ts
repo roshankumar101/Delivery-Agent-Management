@@ -46,7 +46,12 @@ function buildAgentWhere(options: AgentFilterOptions): Prisma.DeliveryAgentWhere
     deletedAt: null,
     ...(options.status ? { status: options.status } : {}),
     ...(options.serviceArea
-      ? { serviceArea: { equals: options.serviceArea, mode: 'insensitive' } }
+      ? {
+          serviceArea: {
+            in: options.serviceArea.split(',').map((area) => area.trim()).filter(Boolean),
+            mode: 'insensitive',
+          },
+        }
       : {}),
     ...(options.search
       ? {

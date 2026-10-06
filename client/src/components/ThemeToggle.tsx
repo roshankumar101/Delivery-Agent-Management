@@ -1,17 +1,21 @@
+import { MoonStar, Sun } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
-export function ThemeToggle() {
+export function ThemeToggle({ className = '' }: { className?: string }) {
   const { isDark, toggleTheme } = useTheme();
   const action = isDark ? 'Switch to light mode' : 'Switch to dark mode';
 
   return (
     <button
       aria-label={action}
-      className="fixed bottom-4 right-4 z-40 rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-lg transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 dark:focus:ring-offset-slate-950"
+      className={`inline-flex items-center justify-center rounded-lg px-3 py-2 transition hover:text-slate-200 text-white ${className}`}
       onClick={toggleTheme}
       type="button"
     >
-      {isDark ? 'Light mode' : 'Dark mode'}
+      {isDark
+        ? <Sun aria-hidden="true" className="size-4" />
+        : <MoonStar aria-hidden="true" className="size-4" />}
+      
     </button>
   );
 }

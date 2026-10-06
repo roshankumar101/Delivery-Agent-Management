@@ -1,7 +1,7 @@
 # Delivery Agent Management System - Progress
 
 ## Current phase
-Phase 21 — Manual Testing (Ready; automated validation intentionally deferred)
+Phase 21 — Manual Testing (targeted validation complete; full state-changing browser testing remains)
 
 ## Completed phases
 - Phase 1: Project Setup
@@ -111,11 +111,22 @@ Phase 21 — Manual Testing (Ready; automated validation intentionally deferred)
 - `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` are documented in `.env.example` for the explicit development admin creation command.
 
 ## Known issues/blockers
-- The configured local PostgreSQL server rejected the placeholder `postgres` password (`P1000`), so the migration has not been applied and database-backed auth/agent requests cannot yet be exercised. Update `DATABASE_URL` in the ignored root `.env` with valid local credentials.
-- Redis is optional. If `REDIS_URL` is absent, caching is disabled with a warning and reads use PostgreSQL; connection failures also fall back to PostgreSQL.
+- Authenticated database-backed endpoints and Redis were reachable during validation; the earlier placeholder PostgreSQL connection failure is no longer current.
+- Redis is optional. If `REDIS_URL` is absent, caching is disabled with a warning and reads use PostgreSQL; Redis was connected and returned `MISS` then `HIT` during this validation.
 - npm reports 7 high-severity dependency advisories in the server dependency tree; no force-fix was applied.
-- A previous client production build reported a chunk-size warning after adding router and auth dependencies; recheck during validation after the Tailwind v4 update.
-- Per user instruction, no project test, lint, build, or runtime commands were run during this review; the code is ready for the user's manual testing. Prisma Client generation for the lifecycle-event schema change remains deferred.
+- The production client build reports a non-blocking chunk-size warning (>500 kB). The frontend lint command exits successfully but reports existing React/compiler warnings in auth, theme, trash, agent details, and agent-list state handling.
+- No project test files were found under `client/src` or `server/src`. Permanent deletion and state-changing CRUD workflows were not exercised against the existing database to avoid creating or deleting user records.
+
+## Latest UI validation — 2026-10-06
+- Moved the single responsive header into the authenticated route layout so Dashboard, Agents, Trash, Analytics, and agent-detail routes share navigation with active-route styling.
+- The header's displayed admin identity comes from `AuthContext.user.name`; the frontend contains no `ADMIN_NAME`, `ADMIN_PASSWORD`, or hardcoded demo-admin value.
+- `ADMIN_NAME` is loaded from the root `.env` by the Prisma config/seed path and passed to the backend service by Docker Compose. The seed creates the admin with that name and synchronizes the existing admin name on reseed without changing its password. Login returns the persisted user; `/auth/me` returns the authenticated database user; `AuthContext` stores the returned user and `AppHeader` renders `user.name`.
+- Temporarily set `ADMIN_NAME=Test Administrator`, recreated the Compose backend, and verified authenticated `/auth/me` returned `Test Administrator`. Restored the original `.env` content, recreated the backend again, and verified `/auth/me` matched the restored setting.
+- Replaced the single service-area checkbox behavior with a keyboard-operable checkbox dropdown using the requested fixed options. “All areas” is selected when no area is active; selecting it clears the filter. Multiple area values are URL-synchronized as a comma-separated `serviceArea` parameter, and the API parses these as case-insensitive OR matches while retaining compatibility with a single value.
+- Verified authenticated login/current-user, agent list/detail/history, search, status and combined service-area filters with pagination, dashboard stats, analytics, trash, CSV export, and protected-route rejection without a token. Combined service-area + search + status + pagination matched the expected existing record. Redis returned `MISS` then `HIT`; Swagger returned HTTP 200.
+- Direct Compose SPA paths initially returned Nginx 404. Added `client/nginx.conf` with an SPA `try_files` fallback and wired it into `client/Dockerfile`. Rebuilt the frontend image; `/`, `/dashboard`, `/agents`, an agent-detail path, `/analytics`, and `/agents/trash` now return the SPA entry page, with protected routes redirecting to login.
+- Validation commands: client build passed; server build passed; Prisma Client generation passed; Compose config validation passed; backend and frontend Compose image builds passed; frontend lint exited successfully with the warnings listed above. No project test suite is configured/found.
+- Full interactive authenticated desktop/tablet/mobile and state-changing CRUD workflows remain for manual testing. Physical permanent deletion was not triggered.
 
 ## Important commands
 - From `client/`: `npm run build`
@@ -129,4 +140,4 @@ Phase 21 — Manual Testing (Ready; automated validation intentionally deferred)
 - Authenticated CSV download: `GET /api/agents/export?search=...&status=ACTIVE&serviceArea=...`
 
 ## Next recommended step
-- Start manual testing and report any issues to address before or alongside automated validation.
+- Manually test add/edit/delete/restore/history and theme/logout in the browser at desktop, tablet, and mobile widths using a disposable test agent; leave the three-day permanent-deletion job unforced on real data.

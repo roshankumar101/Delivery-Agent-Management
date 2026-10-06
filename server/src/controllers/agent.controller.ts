@@ -205,7 +205,15 @@ function parseStatusQuery(value: unknown): AgentStatus | undefined {
 
 function parseAgentFilters(query: Record<string, unknown>) {
   const search = parseTextQuery(query.search, 'search');
-  const serviceArea = parseTextQuery(query.serviceArea, 'serviceArea');
+  const rawServiceArea = Array.isArray(query.serviceArea)
+    ? query.serviceArea.join(',')
+    : query.serviceArea;
+  const serviceArea = [...new Set(
+    (parseTextQuery(rawServiceArea, 'serviceArea') ?? '')
+      .split(',')
+      .map((area) => area.trim())
+      .filter(Boolean),
+  )].join(',');
   const status = parseStatusQuery(query.status);
 
   return {

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Undo2 } from 'lucide-react';
 import { api } from '../api/client';
 import { AgentForm } from '../components/AgentForm';
 import type { ApiFailure, ApiSuccess } from '../types/api';
@@ -98,9 +99,9 @@ export function AgentDetailsPage() {
 
   return (
     <main className="min-h-screen bg-slate-100 px-3 py-5 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-8 sm:py-8">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         <header className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-6 sm:py-5">
-          <Link className="text-sm font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" to="/agents">← Agents</Link>
+          <Link className="text-md font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" to="/agents"><span className="flex items-center gap-1"><Undo2 size={17} />Agents</span></Link>
           {!isLoading && !error && agent && (
             <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -142,7 +143,7 @@ export function AgentDetailsPage() {
                     <dd className="mt-1 break-words text-sm font-medium text-slate-800 dark:text-slate-100">{value}</dd>
                   </div>
                 ))}
-              </dl>
+              </dl> 
             </section>
 
             <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:p-6">
@@ -164,7 +165,7 @@ export function AgentDetailsPage() {
                         <time className="text-sm text-slate-500 dark:text-slate-400" dateTime={entry.modifiedAt}>{formatDateTime(entry.modifiedAt)}</time>
                       </div>
                       <div className="mt-3 overflow-x-auto">
-                        <table className="w-full min-w-[420px] text-left text-sm">
+                        <table className="w-full min-w-105 text-left text-sm">
                           <thead>
                             <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:text-slate-400">
                               <th className="py-2 pr-3 font-medium">Field</th>
@@ -184,7 +185,7 @@ export function AgentDetailsPage() {
                         </table>
                       </div>
                     </li>
-                  ))}
+                  )).reverse()}
                 </ol>
               )}
             </section>

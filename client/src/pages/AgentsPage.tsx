@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ChevronLeft, ChevronRight, Download, Pencil, Search, Trash2, UserPlus, Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AgentForm } from '../components/AgentForm';
@@ -7,6 +8,20 @@ import type { ApiFailure, ApiSuccess } from '../types/api';
 import type { AgentInput, DeliveryAgent, PaginatedAgents } from '../types/agent';
 
 const statuses = ['ACTIVE', 'INACTIVE'] as const;
+const serviceAreaOptions = [
+  'All areas',
+  'Bangalore',
+  'Delhi',
+  'Gurgaon',
+  'Pune',
+  'Noida',
+  'Mumbai',
+  'Hyderabad',
+  'Chennai',
+  'Kolkata',
+  'Ahmedabad',
+  'Jaipur',
+] as const;
 
 function errorMessage(error: unknown): string {
   if (axios.isAxiosError<ApiFailure>(error)) {
@@ -17,8 +32,8 @@ function errorMessage(error: unknown): string {
 
 function statusClass(status: DeliveryAgent['status']): string {
   return status === 'ACTIVE'
-    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
-    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200';
+    ? 'bg-emerald-200 text-emerald-800 dark:bg-emerald-900/70 dark:text-emerald-100'
+    : 'bg-slate-300 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
 }
 
 function formatDate(date: string): string {
@@ -37,7 +52,11 @@ export function AgentsPage() {
   const limit = [10, 25, 50].includes(requestedLimit) ? requestedLimit : 10;
   const search = searchParams.get('search') ?? '';
   const status = searchParams.get('status') ?? '';
-  const serviceArea = searchParams.get('serviceArea') ?? '';
+  const serviceAreas = searchParams.getAll('serviceArea')
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const serviceArea = serviceAreas.join(',');
 
   const [searchDraft, setSearchDraft] = useState(search);
   const [serviceAreaDraft, setServiceAreaDraft] = useState(serviceArea);
@@ -99,7 +118,7 @@ export function AgentsPage() {
       setSearchParams((current) => {
         const next = new URLSearchParams(current);
         const nextSearch = searchDraft.trim();
-        const nextServiceArea = serviceAreaDraft.trim();
+        const nextServiceArea = serviceAreaDraft;
         const changed =
           (next.get('search') ?? '') !== nextSearch ||
           (next.get('serviceArea') ?? '') !== nextServiceArea;
@@ -195,18 +214,20 @@ export function AgentsPage() {
 
   return (
     <main className="min-h-screen bg-slate-100 px-3 py-5 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-8 sm:py-8">
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-6xl">
         <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-6 sm:py-5">
           <div>
-            <Link className="text-sm font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" to="/dashboard">← Dashboard</Link>
+            <Link className="text-sm font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" to="/dashboard"><span className="flex items-center gap-1"><Undo2 size={17} />Dashboard</span></Link>
             <h1 className="mt-2 text-2xl font-bold tracking-tight">Delivery agents</h1>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Search, filter, and manage your delivery team.</p>
           </div>
           <div className="flex w-full flex-col gap-2 min-[400px]:flex-row sm:w-auto">
-            <button className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800 min-[400px]:w-auto" disabled={isExporting} onClick={() => void exportCsv()} type="button">
+            <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800 min-[400px]:w-auto" disabled={isExporting} onClick={() => void exportCsv()} type="button">
+              {!isExporting && <Download aria-hidden="true" className="size-4" />}
               {isExporting ? 'Preparing…' : 'Export CSV'}
             </button>
-            <button className="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500 min-[400px]:w-auto" onClick={() => setModalAgent(null)} type="button">
+            <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500 min-[400px]:w-auto" onClick={() => setModalAgent(null)} type="button">
+              <UserPlus aria-hidden="true" className="size-4" />
               Add agent
             </button>
           </div>
@@ -228,7 +249,10 @@ export function AgentsPage() {
             }}
           >
             <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-              Search agents
+              <span className="inline-flex items-center gap-1.5">
+                <Search aria-hidden="true" className="size-4" />
+                Search agents
+              </span>
               <input className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-900" onChange={(event) => setSearchDraft(event.target.value)} placeholder="Name, phone, email, area" value={searchDraft} />
             </label>
             <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -238,10 +262,52 @@ export function AgentsPage() {
                 {statuses.map((item) => <option key={item} value={item}>{item === 'ACTIVE' ? 'Active' : 'Inactive'}</option>)}
               </select>
             </label>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-              Service area
-              <input className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-900" onChange={(event) => setServiceAreaDraft(event.target.value)} placeholder="Any area" value={serviceAreaDraft} />
-            </label>
+            <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              <span>Service area</span>
+              <details className="group relative mt-1.5">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal text-slate-900 marker:hidden dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100">
+                  <span className="truncate">{serviceAreas.length ? serviceAreas.join(', ') : 'All areas'}</span>
+                  <span aria-hidden="true" className="text-slate-500 transition group-open:rotate-180">⌄</span>
+                </summary>
+                <fieldset className="absolute left-0 top-full z-20 mt-1 max-h-64 w-full min-w-52 space-y-2 overflow-y-auto rounded-lg border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 shadow-xl dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
+                  <legend className="sr-only">Filter by service area</legend>
+                  {serviceAreaOptions.map((option) => {
+                    const isAll = option === 'All areas';
+                    const selectedAreas = new Set(serviceAreaDraft.split(',').filter(Boolean));
+                    const isChecked = isAll ? selectedAreas.size === 0 : selectedAreas.has(option);
+                    return (
+                      <label className="flex cursor-pointer items-center gap-2 text-sm" key={option}>
+                        <input
+                          checked={isChecked}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          onChange={() => {
+                            const nextAreas = new Set(serviceAreaDraft.split(',').filter(Boolean));
+                            if (isAll) {
+                              nextAreas.clear();
+                            } else if (nextAreas.has(option)) {
+                              nextAreas.delete(option);
+                            } else {
+                              nextAreas.add(option);
+                            }
+                            const nextServiceArea = [...nextAreas].join(',');
+                            setServiceAreaDraft(nextServiceArea);
+                            setSearchParams((current) => {
+                              const next = new URLSearchParams(current);
+                              if (nextServiceArea) next.set('serviceArea', nextServiceArea);
+                              else next.delete('serviceArea');
+                              next.delete('page');
+                              return next;
+                            });
+                          }}
+                          type="checkbox"
+                        />
+                        <span>{option}</span>
+                      </label>
+                    );
+                  })}
+                </fieldset>
+              </details>
+            </div>
             <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
               Per page
               <select className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100" onChange={(event) => updateQuery({ limit: event.target.value, page: null })} value={limit}>
@@ -289,7 +355,7 @@ export function AgentsPage() {
             </p>
             <div className="mt-3 hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 md:block">
               <table className="w-full border-collapse text-left text-sm">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                <thead className="bg-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-700 dark:text-slate-300">
                   <tr>
                     <th className="px-5 py-3 font-semibold">Agent</th>
                     <th className="px-5 py-3 font-semibold">Contact</th>
@@ -311,8 +377,12 @@ export function AgentsPage() {
                       <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{formatDate(agent.createdAt)}</td>
                       <td className="px-5 py-4">
                         <div className="flex gap-3">
-                          <button className="font-medium text-blue-700 hover:underline dark:text-blue-400" onClick={() => setModalAgent(agent)} type="button">Edit</button>
-                          <button className="font-medium text-rose-700 hover:underline disabled:opacity-50 dark:text-rose-400" disabled={deletingId !== null} onClick={() => void deleteAgent(agent)} type="button">{deletingId === agent.id ? 'Moving…' : 'Delete'}</button>
+                          <button className="inline-flex items-center text-blue-700  dark:text-blue-300 px-2 py-2 rounded-md bg-blue-200 hover:bg-blue-300 hover:text-blue-700 dark:bg-blue-500/30 dark:hover:bg-blue-500/50 dark:hover:text-blue-200" onClick={() => setModalAgent(agent)} type="button">
+                            <Pencil aria-hidden="true" className="size-4" />
+                          </button>
+                          <button className="inline-flex items-center text-red-700  dark:text-red-400 px-2 py-2 rounded-md bg-red-300/70 hover:bg-red-400/70 hover:text-red-700 dark:bg-red-500/30 dark:hover:bg-red-500/50 dark:hover:text-red-300" disabled={deletingId !== null} onClick={() => void deleteAgent(agent)} type="button">
+                            <Trash2 aria-hidden="true" className="size-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -333,8 +403,8 @@ export function AgentsPage() {
                   </div>
                   <p className="mt-3 text-sm text-slate-700 dark:text-slate-200">{agent.serviceArea} · Added {formatDate(agent.createdAt)}</p>
                   <div className="mt-4 flex gap-4 border-t border-slate-100 pt-3 dark:border-slate-800">
-                    <button className="text-sm font-medium text-blue-700 dark:text-blue-400" onClick={() => setModalAgent(agent)} type="button">Edit</button>
-                    <button className="text-sm font-medium text-rose-700 dark:text-rose-400" disabled={deletingId !== null} onClick={() => void deleteAgent(agent)} type="button">Delete</button>
+                    <button className="inline-flex items-center gap-1 text-sm font-medium text-blue-700 dark:text-blue-400" onClick={() => setModalAgent(agent)} type="button"><Pencil aria-hidden="true" className="size-3.5" />Edit</button>
+                    <button className="inline-flex items-center gap-1 text-sm font-medium text-rose-700 dark:text-rose-400" disabled={deletingId !== null} onClick={() => void deleteAgent(agent)} type="button"><Trash2 aria-hidden="true" className="size-3.5" />Delete</button>
                   </div>
                 </article>
               ))}
@@ -349,8 +419,8 @@ export function AgentsPage() {
               <nav aria-label="Agent pagination" className="mt-5 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-slate-600 dark:text-slate-300">Page {result?.page ?? page} of {totalPages}</p>
                 <div className="flex gap-2">
-                  <button className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-40 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" disabled={page <= 1} onClick={() => updateQuery({ page: String(page - 1) })} type="button">Previous</button>
-                  <button className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-40 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" disabled={page >= totalPages} onClick={() => updateQuery({ page: String(page + 1) })} type="button">Next</button>
+                  <button className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-40 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" disabled={page <= 1} onClick={() => updateQuery({ page: String(page - 1) })} type="button"><ChevronLeft aria-hidden="true" className="size-4" />Previous</button>
+                  <button className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-40 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" disabled={page >= totalPages} onClick={() => updateQuery({ page: String(page + 1) })} type="button">Next<ChevronRight aria-hidden="true" className="size-4" /></button>
                 </div>
               </nav>
             )}

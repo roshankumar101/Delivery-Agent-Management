@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
+import { Undo2, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { ApiFailure, ApiSuccess } from '../types/api';
@@ -80,15 +81,15 @@ export function TrashPage() {
 
   return (
     <main className="min-h-screen bg-slate-100 px-3 py-5 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-8 sm:py-8">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-6 sm:py-5">
           <div>
             <Link className="text-sm font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" to="/dashboard">
-              ← Dashboard
+              <span className="flex items-center gap-1"><Undo2 size={17} />Dashboard</span>
             </Link>
             <h1 className="mt-2 text-2xl font-bold tracking-tight">Trash</h1>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Deleted agents are retained for three days and can be restored.
+              Deleted agents are retained for 3 days and can be restored.
             </p>
           </div>
           <button
@@ -96,7 +97,7 @@ export function TrashPage() {
             onClick={() => void loadTrash()}
             type="button"
           >
-            Refresh
+            <span className="flex items-center gap-1"><RefreshCw size={16} />Refresh</span>
           </button>
         </header>
 

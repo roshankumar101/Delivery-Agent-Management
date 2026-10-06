@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { AppHeader } from '../components/AppHeader';
 
 export function ProtectedRoute() {
   const { user, isLoading } = useAuth();
@@ -17,5 +18,14 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <div className="bg-slate-100 px-3 pt-4 dark:bg-slate-950 sm:px-8 sm:pt-6">
+        <div className="mx-auto max-w-7xl">
+          <AppHeader />
+        </div>
+      </div>
+      <Outlet />
+    </>
+  );
 }

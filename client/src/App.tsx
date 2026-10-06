@@ -7,7 +7,6 @@ import { AgentDetailsPage } from './pages/AgentDetailsPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { LoginPage } from './pages/LoginPage';
 import { TrashPage } from './pages/TrashPage';
-import { ThemeToggle } from './components/ThemeToggle';
 
 function HomeRedirect() {
   const { user, isLoading } = useAuth();
@@ -36,7 +35,6 @@ function App() {
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <ThemeToggle />
     </>
   );
 }
