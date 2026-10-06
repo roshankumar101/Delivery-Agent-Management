@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { serviceAreaOptions } from '../constants/serviceAreas';
 import type { AgentInput, AgentStatus, DeliveryAgent } from '../types/agent';
 
 interface AgentFormProps {
@@ -11,11 +12,18 @@ interface AgentFormProps {
 const inputClassName =
   'mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-900';
 
+const selectableServiceAreas = serviceAreaOptions.filter((area) => area !== 'All areas');
+
 export function AgentForm({ agent, isSaving, onCancel, onSubmit }: AgentFormProps) {
   const [fullName, setFullName] = useState(agent?.fullName ?? '');
   const [phone, setPhone] = useState(agent?.phone ?? '');
   const [email, setEmail] = useState(agent?.email ?? '');
   const [serviceArea, setServiceArea] = useState(agent?.serviceArea ?? '');
+  const availableServiceAreas = agent?.serviceArea
+    && agent.serviceArea !== 'All areas'
+    && !selectableServiceAreas.some((area) => area === agent.serviceArea)
+    ? [agent.serviceArea, ...selectableServiceAreas]
+    : selectableServiceAreas;
   const [status, setStatus] = useState<AgentStatus>(agent?.status ?? 'ACTIVE');
   const [error, setError] = useState<string | null>(null);
 
@@ -54,7 +62,10 @@ export function AgentForm({ agent, isSaving, onCancel, onSubmit }: AgentFormProp
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
           Service area
-          <input className={inputClassName} maxLength={120} onChange={(event) => setServiceArea(event.target.value)} required value={serviceArea} />
+          <select className={inputClassName} onChange={(event) => setServiceArea(event.target.value)} required value={serviceArea}>
+            <option disabled value="">Select service area</option>
+            {availableServiceAreas.map((area) => <option key={area} value={area}>{area}</option>)}
+          </select>
         </label>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
           Status

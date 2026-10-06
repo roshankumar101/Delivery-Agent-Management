@@ -4,24 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AgentForm } from '../components/AgentForm';
 import { api } from '../api/client';
+import { serviceAreaOptions } from '../constants/serviceAreas';
 import type { ApiFailure, ApiSuccess } from '../types/api';
 import type { AgentInput, DeliveryAgent, PaginatedAgents } from '../types/agent';
 
 const statuses = ['ACTIVE', 'INACTIVE'] as const;
-const serviceAreaOptions = [
-  'All areas',
-  'Bangalore',
-  'Delhi',
-  'Gurgaon',
-  'Pune',
-  'Noida',
-  'Mumbai',
-  'Hyderabad',
-  'Chennai',
-  'Kolkata',
-  'Ahmedabad',
-  'Jaipur',
-] as const;
 
 function errorMessage(error: unknown): string {
   if (axios.isAxiosError<ApiFailure>(error)) {
