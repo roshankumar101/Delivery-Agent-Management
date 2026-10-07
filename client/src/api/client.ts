@@ -1,7 +1,15 @@
 import axios from 'axios';
 
+const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/+$/, '');
+
+if (!apiUrl) {
+  throw new Error('VITE_API_URL must be set to the backend API origin.');
+}
+
+const apiBaseUrl = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: apiBaseUrl,
   headers: { 'Content-Type': 'application/json' },
 });
 

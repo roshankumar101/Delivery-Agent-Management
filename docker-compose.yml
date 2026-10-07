@@ -34,6 +34,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/delivery_agent_management?schema=public
       REDIS_URL: ${REDIS_URL}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:8080}
       ADMIN_NAME: ${ADMIN_NAME}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
@@ -50,7 +51,7 @@ services:
     build:
       context: ./client
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:5000/api}
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
     ports:
       - "8080:80"
     depends_on:

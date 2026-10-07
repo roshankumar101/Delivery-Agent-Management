@@ -1,84 +1,103 @@
 # Delivery Agent Management System
 
-A web application for administrators to manage delivery agents, review changes, recover deleted records, and monitor operational statistics.
+A full-stack application for administrators to manage delivery agents, review changes, and monitor operational activity. It provides admin authentication, agent CRUD, search, filtering and pagination, soft delete and restore, modification history, Redis caching, PostgreSQL persistence, analytics and statistics, CSV export, and Swagger/OpenAPI documentation.
 
-## 1. Project Overview
+## Production Demo
 
-The Delivery Agent Management System gives an administrator one place to maintain delivery-agent profiles and inspect their operational status. It supports searchable, filterable agent records, dashboard summaries, analytics, CSV export, and a recoverable trash workflow.
+Production Application: [https://delivery-agent-management.vercel.app/](https://delivery-agent-management.vercel.app/)
 
-The browser client is built with React and TypeScript and communicates with an Express REST API. The API persists records in PostgreSQL through Prisma and uses Redis for short-lived response caching.
+The frontend is deployed on Vercel, with the backend deployed separately on AWS EC2. The production frontend and backend communicate over HTTPS. For evaluation, use the local Docker setup below.
 
-## 2. Key Features
+## Quick Start
 
-### Core / Assignment Features
+### Prerequisites
 
-- Create, view, edit, and remove delivery agents from active lists.
-- Search agent names, email addresses, phone numbers, and service areas.
-- Filter by active/inactive status and service area; the service-area filter supports selecting multiple fixed options.
-- Paginate agent lists and choose a page size.
-- Persist users, agents, and modification history in PostgreSQL through Prisma.
-- Provide a REST API with validation, consistent success/error responses, and centralized error handling.
-- Cache read responses in Redis and invalidate relevant entries after agent changes.
-- Provide a responsive browser interface and interactive API documentation.
+- Git
+- Docker with Docker Compose
 
-### Additional Implemented Features
+Docker Compose starts the frontend, backend, PostgreSQL, and Redis services. The evaluator does not need to install PostgreSQL or Redis separately.
 
-- Admin sign-in with one-hour JWT bearer tokens and bcrypt password hashing.
-- Environment-configured initial admin account; the seed reads `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`.
-- Dashboard totals for agents, active/inactive status, deleted agents, and service areas.
-- Analytics for service-area and status distributions, 12-month creation/modification/lifecycle trends, and lifetime lifecycle totals.
-- Agent detail view with complete, sequential modification history.
-- Soft delete, a Trash view with remaining retention time, and restore.
-- Scheduled permanent deletion of agents after three days in Trash.
-- CSV download for agent records, with the list filters applied on the Agents page.
-- Fixed service-area choices in add/edit forms and the multi-select list filter. The filter’s “All areas” option is not a valid agent service area.
-- Persistent light/dark theme that follows the system setting until a preference is selected.
-- Loading, empty, error, and action-feedback states.
-- Lucide React icons on selected navigation and action controls.
-- Docker Compose setup for the client, API, PostgreSQL, and Redis.
-- Swagger UI and a raw OpenAPI 3.0.3 document.
+### 1. Clone the repository
 
-## 3. Tech Stack
+```bash
+git clone https://github.com/roshankumar101/Delivery-Agent-Management.git delivery-agent-management
+cd delivery-agent-management
+```
 
-### Frontend
+### 2. Create and configure `.env`
 
-- React 19, TypeScript, Vite
-- React Router
-- Axios
-- Tailwind CSS v4 with the Vite plugin
-- Lucide React
+Copy the provided [`.env.example`](./.env.example) file:
 
-### Backend
+```bash
+cp .env.example .env
+```
 
-- Node.js, Express 5, TypeScript
-- Redis client (`redis`)
-- `dotenv`, `bcryptjs`, `jsonwebtoken`
+On Windows PowerShell:
 
-### Database
+```powershell
+Copy-Item .env.example .env
+```
 
-- PostgreSQL
-- Prisma ORM and Prisma PostgreSQL adapter
+Edit `.env` and replace the example `JWT_SECRET` and `ADMIN_PASSWORD` with private values. Set the admin name and email you want to use for evaluation. The provided example already sets `REDIS_URL=redis://redis:6379`, which is the correct address for Redis from the backend container. The Compose configuration supplies its PostgreSQL connection and uses the default local frontend/API URLs.
 
-### Cache
+The example admin credentials are placeholders, not shared evaluation credentials. Sign in using the `ADMIN_EMAIL` and `ADMIN_PASSWORD` values you set in `.env`. Do not commit `.env` or put private values in this README.
 
-- Redis
+### 3. Build and start the application
 
-### Authentication
+Run this from the repository root:
 
-- JWT bearer tokens
-- bcryptjs password hashing
+```bash
+docker compose up --build
+```
 
-### Infrastructure
+Compose starts PostgreSQL and Redis, waits for their health checks, then starts the backend and frontend. The backend generates Prisma Client, applies the checked-in database migrations, synchronizes the configured admin account, and starts the API. The first image build may take several minutes.
 
-- Docker
-- Docker Compose
+Leave this terminal running while evaluating the application. Press `Ctrl+C` to stop the services. To stop the stack later from another terminal, run `docker compose down`. This retains the database volume.
 
-### API Documentation
+### 4. Open the application
 
-- OpenAPI 3.0.3
-- Swagger UI Express
+| Service | URL |
+| --- | --- |
+| Web application | [http://localhost:8080](http://localhost:8080) |
+| API health | [http://localhost:5000/health](http://localhost:5000/health) |
+| Swagger UI | [http://localhost:5000/api-docs](http://localhost:5000/api-docs) |
+| OpenAPI JSON | [http://localhost:5000/api-docs/openapi.json](http://localhost:5000/api-docs/openapi.json) |
 
-## 4. Architecture
+## Features
+
+### Agent management
+
+- Create, view, edit, and soft-delete delivery-agent records.
+- Search and filter by status and service area; select multiple service areas.
+- Paginate results and choose the page size.
+- Use fixed service-area choices in the add/edit form.
+- Export agent records as CSV.
+- Review sequential modification history on the agent details page.
+- Restore agents from Trash. Agents retained there for three days are permanently deleted by the scheduled cleanup.
+
+### Dashboard and analytics
+
+- View agent and status statistics on the dashboard.
+- Review service-area and status distributions, creation and modification trends, and deletion/restoration activity.
+
+### Authentication and interface
+
+- Admin login uses bcrypt-hashed passwords and JWT bearer tokens with a one-hour expiry.
+- The initial admin account is configured through `.env`.
+- Responsive interface with loading, empty, and error states.
+- Light/dark theme preference persists in the browser.
+
+## Feature Walkthrough
+
+1. Sign in using the admin email and password configured in `.env`.
+2. Review dashboard totals, then open Agents to browse, search, filter, and paginate agent records.
+3. Add an agent by selecting a service area. Edit an agent and review its modification history from its detail page.
+4. Export agent data as CSV.
+5. Move an agent to Trash, restore it, and verify that it returns to the active list.
+6. Review dashboard analytics after making changes.
+7. Use Swagger UI to browse the documented API routes.
+
+## Architecture
 
 ```text
 Browser
@@ -86,262 +105,110 @@ Browser
    ▼
 React + TypeScript ── Axios ──► Express REST API
                                   │
-                                  ├── Redis (read cache)
+                                  ├── Redis (cache)
                                   │
                                   └── Prisma ──► PostgreSQL
 ```
 
-Backend requests flow through the matching Express route and controller into a service. Read services use Redis when it is ready and Prisma/PostgreSQL as the source of truth. A cache outage bypasses Redis rather than preventing database reads. Agent mutations invalidate the relevant cached agent, list, and statistics entries.
+Express routes pass requests through controllers to services. PostgreSQL is the source of truth. Redis caches selected read results; when Redis is unavailable, requests fall back to PostgreSQL.
 
-## 5. Project Structure
+## Technology
+
+- **Frontend:** React, TypeScript, Vite, React Router, Axios, Tailwind CSS, Lucide React
+- **Backend:** Node.js, Express, TypeScript
+- **Database:** PostgreSQL, Prisma
+- **Cache:** Redis
+- **Authentication:** JWT, bcryptjs
+- **Local stack:** Docker Compose
+- **API documentation:** OpenAPI 3.0.3, Swagger UI
+
+## Repository Structure
 
 ```text
 delivery-agent-management/
-├── client/
-│   ├── public/
+├── client/                 # React application
 │   └── src/
-│       ├── api/           # Axios API client
-│       ├── auth/          # Authentication state and route protection
-│       ├── components/    # Shared header, forms, and theme
-│       ├── constants/     # Shared service-area options
-│       ├── pages/         # Dashboard, agents, trash, analytics, login
+│       ├── components/
+│       ├── pages/
 │       └── types/
-├── server/
-│   ├── prisma/            # Schema and migrations
+├── server/                 # Express API
+│   ├── prisma/             # Schema and migrations
 │   └── src/
-│       ├── config/        # Prisma and Redis clients
+│       ├── config/
 │       ├── controllers/
-│       ├── docs/          # OpenAPI definition
-│       ├── jobs/          # Scheduled retention cleanup
-│       ├── middleware/
 │       ├── routes/
-│       ├── scripts/       # Admin seed/creation
 │       └── services/
 ├── docker-compose.yml
 ├── .env.example
-├── PROGRESS.md
 └── README.md
 ```
 
-## 6. Quick Setup & Evaluation
+## Redis Caching
 
-### Prerequisites
+The backend reuses a Redis client and uses cache-aside reads with TTLs:
 
-- Git
-- Docker Desktop or Docker Engine with the Docker Compose plugin
-
-The repository includes a root [`docker-compose.yml`](./docker-compose.yml) that starts the frontend, backend, PostgreSQL, and Redis together. The Compose stack supplies PostgreSQL and Redis; they do not need to be installed separately for this workflow.
-
-### Step 1 — Clone
-
-```bash
-git clone https://github.com/roshankumar101/Delivery-Agent-Management.git
-cd Delivery-Agent-Management
-```
-
-### Step 2 — Configure the environment
-
-Copy the root [`.env.example`](./.env.example) template to `.env`, then edit `.env` with your local evaluation credentials and settings:
-
-```bash
-cp .env.example .env
-```
-
-On Windows PowerShell, the equivalent copy command is:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Set a private `JWT_SECRET`, a unique `ADMIN_NAME` and `ADMIN_EMAIL`, and a strong `ADMIN_PASSWORD`. For Compose networking, set:
-
-```dotenv
-REDIS_URL=redis://redis:6379
-```
-
-The template’s `redis://localhost:6379` is for running the backend directly on the host. Containers must use the Compose service hostname `redis`. Compose supplies the backend’s PostgreSQL connection internally; `DATABASE_URL` in `.env` is used for local, non-container development.
-
-Keep `.env` local and do not commit it. `.env.example` contains placeholders, not credentials for an evaluator account.
-
-### Step 3 — Start the full stack with `docker-compose.yml`
-
-```bash
-docker compose -f docker-compose.yml up --build -d
-```
-
-Compose starts PostgreSQL and Redis, waits for their health checks, then builds and starts the backend and client. Backend startup generates Prisma Client, applies committed migrations, runs the admin seed, and starts the API. The seed creates the configured admin if its email is new; on later starts it synchronizes that account’s name but does not change its password.
-
-To follow startup output:
-
-```bash
-docker compose logs -f backend
-```
-
-### Step 4 — Evaluate
-
-Open the client at [http://localhost:8080](http://localhost:8080), sign in with `ADMIN_EMAIL` and `ADMIN_PASSWORD` from `.env`, and follow the [Feature Walkthrough](#9-feature-walkthrough) and [Evaluation Checklist](#14-evaluation-checklist).
-
-Stop the stack while preserving the database volume:
-
-```bash
-docker compose down
-```
-
-For a fresh evaluation database only, `docker compose down -v` also removes the PostgreSQL volume and permanently deletes its local data. Use that only when you intend to reset the evaluation data.
-
-## 7. Application URLs
-
-| Resource | URL |
-| --- | --- |
-| Web application | [http://localhost:8080](http://localhost:8080) |
-| API health | [http://localhost:5000/health](http://localhost:5000/health) |
-| Swagger UI | [http://localhost:5000/api-docs](http://localhost:5000/api-docs) |
-| Raw OpenAPI JSON | [http://localhost:5000/api-docs/openapi.json](http://localhost:5000/api-docs/openapi.json) |
-
-## 8. Admin Login
-
-The Compose seed reads `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` from the root `.env`. It stores a bcrypt hash of the password in PostgreSQL; the password is not sent to or bundled into the frontend. The configured name and email are returned as the authenticated user after login.
-
-On a first run with a new PostgreSQL volume, use the email and password currently set in `.env`. If the same email already exists from an earlier run, the seed updates its name but leaves its password unchanged.
-
-## 9. Feature Walkthrough
-
-1. **Sign in** with the configured admin credentials. Protected pages redirect unauthenticated users to login.
-2. **Dashboard** shows current totals and provides a CSV export.
-3. **Agents** supports add/edit, search, status filtering, multi-select service-area filtering, URL-synchronized filters, page-size selection, and pagination. The fixed agent service-area choices are Bangalore, Delhi, Gurgaon, Pune, Noida, Mumbai, Hyderabad, Chennai, Kolkata, Ahmedabad, and Jaipur.
-4. **Agent details** shows contact and status information plus the full modification history. Meaningful edits append sequential history entries.
-5. **Trash** lists soft-deleted agents with deletion time and remaining retention time. Restore returns an agent to the active list.
-6. **Analytics** summarizes service areas, status, creation and modification trends, and delete/restore/permanent-delete activity.
-7. **Theme and navigation** are available from the shared header across authenticated pages. The light/dark choice persists and can follow the system preference.
-
-Permanent deletion is scheduled by the backend once an agent has remained in Trash for three days. It is not an immediate UI action.
-
-## 10. Redis Caching
-
-Redis is provided by Compose as the `redis` service. The Compose backend connects using `redis://redis:6379`; when running the backend directly on the host, use `redis://localhost:6379`.
-
-The backend reuses one Redis client and caches read results with expiration:
-
-| Data | Key pattern | TTL |
+| Data | Key | TTL |
 | --- | --- | --- |
-| Agent list/search/filter/page results | `agents:list:<query-hash>` | 30 seconds |
+| Agent list and query variants | `agents:list:<query-hash>` | 30 seconds |
 | Agent detail | `agent:<id>` | 60 seconds |
 | Dashboard statistics | `agents:stats` | 30 seconds |
 | Analytics | `agents:analytics:<month>` | 60 seconds |
 | Trash list | `agents:trash` | 30 seconds |
 
-List keys are derived from all list options, including page, limit, search, status, and service area. Successful reads return `X-Cache: HIT` or `X-Cache: MISS`; when Redis is unavailable they return `X-Cache: BYPASS` and load from PostgreSQL.
+Agent list cache keys include the query options, including search, status, service area, page, and limit. Cacheable responses include the `X-Cache` header with `HIT`, `MISS`, or `BYPASS`. Create, update, soft delete, restore, and permanent cleanup invalidate relevant cache entries. Redis failures do not prevent reads from PostgreSQL.
 
-Create, update, soft delete, restore, and scheduled permanent deletion invalidate relevant agent, list, statistics, analytics, and trash entries. Invalidation scans only the application’s key patterns; it does not flush the Redis database.
+To inspect Redis keys while the Compose stack is running:
 
-### Verify Redis locally
+```bash
+docker compose exec redis redis-cli --scan --pattern 'agents:*'
+docker compose exec redis redis-cli --scan --pattern 'agent:*'
+```
 
-1. Open the Agents page or Dashboard to request cached data, then repeat the same request within its TTL.
-2. In the browser developer tools, inspect the authenticated request’s response headers. A first cacheable read should report `X-Cache: MISS`; a repeat may report `HIT`.
-3. Inspect keys from a separate terminal:
+## Database
 
-   ```bash
-   docker compose exec redis redis-cli --scan --pattern 'agents:*'
-   docker compose exec redis redis-cli --scan --pattern 'agent:*'
-   ```
+PostgreSQL stores admin accounts, delivery agents, modification records, and lifecycle events. Prisma migrations are applied automatically during backend startup in the Compose setup. The PostgreSQL data is kept in a named Docker volume when the stack is stopped with `docker compose down`.
 
-These steps document how to inspect caching; the README does not assume a Redis runtime check has been performed.
+## API Overview
 
-## 11. Database & Prisma
-
-PostgreSQL is the source of truth. The Prisma schema defines:
-
-- `User` for administrator accounts.
-- `DeliveryAgent` for agent records and soft-delete timestamps.
-- `AgentModification` for sequential field-level edit history, cascading when its agent is permanently deleted.
-- `AgentLifecycleEvent` for delete, restore, and permanent-delete analytics that remain after an agent row is removed.
-
-Compose applies the checked-in migrations with `prisma migrate deploy` before starting the backend. The agent cleanup job runs at backend startup and every 24 hours, deleting records whose soft-delete timestamp is at least three days old.
-
-## 12. API Documentation
-
-With the Compose stack running, use [Swagger UI](http://localhost:5000/api-docs) to browse and try the OpenAPI-documented routes. The raw specification is available at [http://localhost:5000/api-docs/openapi.json](http://localhost:5000/api-docs/openapi.json).
-
-Authenticated API routes use a bearer token returned by `POST /api/auth/login`.
-
-## 13. API Overview
+Agent and statistics routes require authentication. Sign in through the login endpoint and provide the returned JWT as a bearer token for protected requests.
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | `GET` | `/health` | API health |
 | `POST` | `/api/auth/login` | Admin sign-in |
-| `GET` | `/api/auth/me` | Current authenticated admin |
+| `GET` | `/api/auth/me` | Current admin |
 | `POST` | `/api/agents` | Create an agent |
 | `GET` | `/api/agents` | Search, filter, and paginate agents |
 | `GET` | `/api/agents/:id` | Agent details |
-| `PATCH` | `/api/agents/:id` | Update an agent and record meaningful changes |
+| `PATCH` | `/api/agents/:id` | Update an agent |
 | `DELETE` | `/api/agents/:id` | Soft-delete an agent |
 | `GET` | `/api/agents/:id/history` | Agent modification history |
-| `GET` | `/api/agents/trash` | List soft-deleted agents |
+| `GET` | `/api/agents/trash` | List deleted agents |
 | `POST` | `/api/agents/:id/restore` | Restore an agent |
 | `GET` | `/api/agents/stats` | Dashboard statistics |
 | `GET` | `/api/agents/analytics` | Operational analytics |
 | `GET` | `/api/agents/export` | Download CSV |
 
-Agent listing accepts `page`, `limit`, `search`, `status`, and `serviceArea`. For multiple service areas, send comma-separated values, for example `serviceArea=Bangalore,Delhi`. CSV export accepts `search`, `status`, and `serviceArea` filters.
+The agent list accepts `page`, `limit`, `search`, `status`, and `serviceArea` query parameters. Multiple service areas can be comma-separated. Swagger UI at `/api-docs` provides the interactive API documentation.
 
-## 14. Evaluation Checklist
+## Evaluation Checklist
 
-- [ ] Start the full stack with Docker Compose and confirm all four services are running.
-- [ ] Sign in with the configured admin account; refresh the page and confirm the session is restored.
-- [ ] Create an agent using a fixed service-area option, then search and filter the agent list.
-- [ ] Select multiple service areas and verify the results; combine the selection with status, search, and pagination.
-- [ ] Edit an agent and review its modification history.
-- [ ] Export the current agent set as CSV.
-- [ ] Soft-delete an agent, find it in Trash, and restore it.
-- [ ] Review dashboard statistics and analytics after changing agent records.
-- [ ] Switch light/dark theme and confirm the choice persists after refresh.
-- [ ] Sign out and confirm protected pages require authentication.
-- [ ] Inspect `X-Cache` response headers and Redis keys as described in the Redis section.
-- [ ] Browse the documented routes in Swagger UI.
+- [ ] Start the stack using the Quick Start instructions.
+- [ ] Sign in using the admin account configured in `.env`.
+- [ ] Create an agent and confirm it appears in the agent list.
+- [ ] Search, filter by status and multiple service areas, and paginate the list.
+- [ ] Edit the agent and inspect its modification history.
+- [ ] Download the CSV export.
+- [ ] Soft-delete the agent, restore it from Trash, and confirm it is active again.
+- [ ] Review dashboard statistics and analytics.
+- [ ] Change the theme and refresh the page to confirm the preference persists.
+- [ ] Inspect Swagger UI and the Redis cache headers/keys.
 
-Use disposable evaluation records. The scheduled three-day retention cleanup permanently deletes expired records and is intentionally not triggered by the checklist.
+Use test records for evaluation. Agents that remain in Trash for three days are permanently deleted by scheduled cleanup.
 
-## 15. Screenshots
+## Local Development
 
-No application screenshots are currently included in the repository. Screenshots can be added to a repository `screenshots/` directory and linked here when available.
+For development without Docker, install Node.js and provide local PostgreSQL and Redis instances. Use the root `.env.example` as a starting point; when the backend runs directly on the host, set `REDIS_URL=redis://localhost:6379`. The client uses `VITE_API_URL` as the backend origin and appends `/api`.
 
-## 16. Local Development
-
-For development without Docker, install a compatible Node.js runtime and provide local PostgreSQL and Redis services. Create a root `.env` from `.env.example`; set `DATABASE_URL` to the local database, `REDIS_URL=redis://localhost:6379`, and the admin/JWT values. `PORT` defaults to `5000`, and the client API URL defaults to `http://localhost:5000/api`.
-
-Install dependencies in each application:
-
-```bash
-cd server
-npm install
-cd ../client
-npm install
-```
-
-From `server/`, generate Prisma Client, apply the migrations, and create an initial admin account:
-
-```bash
-npm run prisma:generate
-npm run prisma:migrate:deploy
-npm run admin:create:dev
-```
-
-The development admin command refuses to overwrite an existing email and requires an admin password of at least 12 characters.
-
-Start the backend and client in separate terminals:
-
-```bash
-# Terminal 1
-cd server
-npm run dev
-```
-
-```bash
-# Terminal 2
-cd client
-npm run dev
-```
-
-The Vite client is typically available at [http://localhost:5173](http://localhost:5173); the API remains at [http://localhost:5000](http://localhost:5000). Useful project scripts include `npm run build` and `npm run lint` in `client/`, and `npm run build` in `server/`.
+The client and server have separate package manifests and scripts. The client provides `dev`, `build`, `lint`, and `preview`; the server provides `dev`, `build`, `start`, Prisma migration scripts, and admin seed scripts.
 

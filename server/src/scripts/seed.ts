@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { UserRole } from '@prisma/client';
 import { prisma } from '../config/prisma';
 import { hashPassword } from '../services/auth.service';
@@ -18,16 +19,26 @@ async function seedAdmin(): Promise<void> {
   try {
     const existingAdmin = await prisma.user.findUnique({
       where: { email },
-      select: { id: true },
+      select: { id: true, passwordHash: true },
+    });
+    const adminToUpdate = existingAdmin ?? await prisma.user.findFirst({
+      where: { role: UserRole.ADMIN },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      select: { id: true, passwordHash: true },
     });
 
-    if (existingAdmin) {
+    if (adminToUpdate) {
+      const passwordMatches = await bcrypt.compare(password, adminToUpdate.passwordHash);
       await prisma.user.update({
-        where: { email },
-        data: { name },
+        where: { id: adminToUpdate.id },
+        data: {
+          name,
+          email,
+          ...(passwordMatches ? {} : { passwordHash: await hashPassword(password) }),
+        },
         select: { id: true },
       });
-      console.info('Admin seed synchronized the configured admin name.');
+      console.info('Admin seed synchronized the configured admin account.');
       return;
     }
 
@@ -47,6 +58,9 @@ async function seedAdmin(): Promise<void> {
 }
 
 seedAdmin().catch((error: unknown) => {
-  console.error('Admin seed failed:', error);
+  const message = error instanceof Error && error.message.startsWith('Admin seed requires')
+    ? error.message
+    : 'Database operation failed. Verify the database connection.';
+  console.error('Admin seed failed:', message);
   process.exitCode = 1;
 });

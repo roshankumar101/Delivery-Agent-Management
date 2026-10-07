@@ -64,9 +64,11 @@ Phase 21 — Manual Testing (targeted validation complete; full state-changing b
 - Aligned client Tailwind dependencies to v4, removed the PostCSS/autoprefixer dependencies and obsolete configuration files, and cleaned unused starter assets and root-level npm manifests.
 - Updated the client document title and description for the application.
 - Removed the obsolete Vite starter README, unused `swagger-jsdoc` dependency, and branded the client favicon; corrected the protected-route dark loading state and minor JSX formatting.
+- Prepared production deployment configuration: Vite API origin and backend CORS are environment-based, the existing admin seed synchronizes account credentials without duplicates, and a separate EC2 Compose file runs backend, private PostgreSQL/Redis, and an Nginx HTTPS reverse proxy for the EC2 IP. Elastic IP reservation, IP certificate issuance/renewal, Vercel deployment, and EC2 configuration remain pending.
 
 ## Pending phases
 - Phase 21: Manual Testing
+- Production deployment: provision/configure AWS EC2, domain and HTTPS reverse proxy, deploy the backend stack, and configure Vercel environment/build settings. No deployment was performed.
 
 ## Important architecture decisions
 - Keep frontend and backend in separate folders at the repository root (`client/` and `server/`).

@@ -10,3 +10,4 @@ npm-debug.log*
 server/prisma/dev.db
 server/prisma/*.db
 PROGRESS.md
+!PROGRESS.md
