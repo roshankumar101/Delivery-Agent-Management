@@ -209,11 +209,11 @@ export function AgentsPage() {
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Search, filter, and manage your delivery team.</p>
           </div>
           <div className="flex w-full flex-col gap-2 min-[400px]:flex-row sm:w-auto">
-            <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800 min-[400px]:w-auto" disabled={isExporting} onClick={() => void exportCsv()} type="button">
+            <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500 min-[400px]:w-auto" disabled={isExporting} onClick={() => void exportCsv()} type="button">
               {!isExporting && <Download aria-hidden="true" className="size-4" />}
               {isExporting ? 'Preparing…' : 'Export CSV'}
             </button>
-            <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500 min-[400px]:w-auto" onClick={() => setModalAgent(null)} type="button">
+            <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-green-600/90 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 dark:bg-green-500/90 dark:hover:bg-green-500 min-[400px]:w-auto" onClick={() => setModalAgent(null)} type="button">
               <UserPlus aria-hidden="true" className="size-4" />
               Add agent
             </button>

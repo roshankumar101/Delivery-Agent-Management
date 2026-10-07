@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { Undo2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { ApiFailure, ApiSuccess } from '../types/api';
@@ -104,7 +105,7 @@ export function AnalyticsPage() {
       <div className="mx-auto max-w-6xl">
         <header className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-6 sm:py-5">
           <Link className="text-sm font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" to="/dashboard">
-            ← Dashboard
+            <span className="flex items-center gap-1"><Undo2 size={17} />Dashboard</span>
           </Link>
           <h1 className="mt-2 text-2xl font-bold tracking-tight">Agent analytics</h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">

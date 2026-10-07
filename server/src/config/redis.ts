@@ -2,10 +2,6 @@ import { createClient } from 'redis';
 
 const redisUrl = process.env.REDIS_URL;
 
-if (!redisUrl) {
-  throw new Error('REDIS_URL must be set before the server can initialize Redis.');
-}
-
 export const redisClient = createClient({
   ...(redisUrl ? { url: redisUrl } : {}),
   socket: {
