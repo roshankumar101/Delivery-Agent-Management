@@ -9,3 +9,4 @@ npm-debug.log*
 .vite
 server/prisma/dev.db
 server/prisma/*.db
+PROGRESS.md
